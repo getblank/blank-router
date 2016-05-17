@@ -59,6 +59,7 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	if err != nil {
 		return nil, err
 	}
+	c.SetExtra(apiKey)
 
 	return apiKey, nil
 }

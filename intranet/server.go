@@ -3,9 +3,12 @@ package intranet
 import (
 	"net/http"
 
-	"github.com/getblank/blank-router/taskq"
+	log "github.com/Sirupsen/logrus"
 	"github.com/getblank/wango"
 	"golang.org/x/net/websocket"
+
+	"github.com/getblank/blank-router/berrors"
+	"github.com/getblank/blank-router/taskq"
 )
 
 const (
@@ -25,10 +28,44 @@ func taskGetHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 }
 
 func taskDoneHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	if len(args) < 2 {
+		log.WithField("argumentsLength", len(args)).Warn("Invalid task.done RPC")
+		return nil, berrors.ErrInvalidArguments
+	}
+	id, ok := args[0].(float64)
+	if !ok {
+		log.WithField("taskId", args[0]).Warn("Invalid task.id in task.done RPC")
+		return nil, berrors.ErrInvalidArguments
+	}
+
+	result := taskq.Result{
+		ID:     int(id),
+		Result: args[1],
+	}
+	taskq.Done(result)
 	return nil, nil
 }
 
 func taskErrorHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	if len(args) < 2 {
+		log.WithField("argumentsLength", len(args)).Warn("Invalid task.error RPC")
+		return nil, berrors.ErrInvalidArguments
+	}
+	id, ok := args[0].(float64)
+	if !ok {
+		log.WithField("taskId", args[0]).Warn("Invalid task.id in task.error RPC")
+		return nil, berrors.ErrInvalidArguments
+	}
+	err, ok := args[1].(string)
+	if !ok {
+		log.WithField("error", args[1]).Warn("Invalid description in task.error RPC")
+		return nil, berrors.ErrInvalidArguments
+	}
+	result := taskq.Result{
+		ID:  int(id),
+		Err: err,
+	}
+	taskq.Done(result)
 	return nil, nil
 }
 

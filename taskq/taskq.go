@@ -16,6 +16,8 @@ const (
 	DbSet           = "dbSet"
 	DbDelete        = "dbDelete"
 	DbFind          = "dbFind"
+	DbLoadRefs      = "dbLoadRefs"
+	DbPush          = "dbPush"
 	Auth            = "authentication"
 	CommonSettings  = "commonSettings"
 	DbAction        = "action"

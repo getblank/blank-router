@@ -15,7 +15,8 @@ var (
 )
 
 const (
-	uriNewSession = "session.new"
+	uriNewSession    = "session.new"
+	uriDeleteSession = "session.delete"
 )
 
 // NewSession creates a new session in serviceRegistry
@@ -31,6 +32,13 @@ func NewSession(userID string) (string, error) {
 	}
 
 	return apiKey, nil
+}
+
+// DeleteSession delete session with provided apiKey from serviceRegistry
+func DeleteSession(apiKey string) error {
+	_, err := call(uriDeleteSession, apiKey)
+
+	return err
 }
 
 func call(uri string, args ...interface{}) (interface{}, error) {

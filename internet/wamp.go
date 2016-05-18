@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	uriSignIn = "com.sign-in"
-	uriState  = "com.state"
+	uriSignIn  = "com.sign-in"
+	uriSignOut = "com.sign-out"
+	uriState   = "com.state"
 )
 
 var (
@@ -36,8 +37,7 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	}
 	t := taskq.Task{
 		Type:   taskq.Auth,
-		UserID: "222222-2222-2222-2222-222222222222",
-		Store:  "users",
+		UserID: "guest",
 		Arguments: map[string]interface{}{
 			"login":    args[0],
 			"password": args[1],
@@ -62,6 +62,20 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	c.SetExtra(apiKey)
 
 	return apiKey, nil
+}
+
+func signOutHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	extra := c.GetExtra()
+	if extra == nil {
+		return nil, errors.New("No session")
+	}
+	apiKey, ok := extra.(string)
+	if !ok {
+		log.WithField("extra", extra).Warn("Extra is not a string")
+		return nil, berrors.ErrError
+	}
+	err := intranet.DeleteSession(apiKey)
+	return nil, err
 }
 
 func stateHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {

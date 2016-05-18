@@ -45,7 +45,6 @@ type Result struct {
 // Task represents task for workers
 type Task struct {
 	ID        int                    `json:"id"`
-	Store     string                 `json:"store"`
 	UserID    string                 `json:"userId"`
 	Type      string                 `json:"type"`
 	Arguments map[string]interface{} `json:"args"`

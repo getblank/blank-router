@@ -36,8 +36,7 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		return nil, errInvalidArguments
 	}
 	t := taskq.Task{
-		Type:   taskq.Auth,
-		UserID: "guest",
+		Type: taskq.Auth,
 		Arguments: map[string]interface{}{
 			"login":    args[0],
 			"password": args[1],

@@ -46,6 +46,7 @@ type Result struct {
 type Task struct {
 	ID        int                    `json:"id"`
 	UserID    string                 `json:"userId"`
+	Store     string                 `json:"store"`
 	Type      string                 `json:"type"`
 	Arguments map[string]interface{} `json:"args"`
 }

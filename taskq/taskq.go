@@ -19,7 +19,7 @@ const (
 	DbLoadRefs      = "dbLoadRefs"
 	DbPush          = "dbPush"
 	Auth            = "authentication"
-	CommonSettings  = "commonSettings"
+	UserConfig      = "userConfig"
 	DbAction        = "action"
 	HTTPHook        = "httpHook"
 	ScheduledScript = "scheduledScript"

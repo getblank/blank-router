@@ -16,8 +16,31 @@ var (
 
 const (
 	uriNewSession    = "session.new"
+	uriCheckSession  = "session.check"
 	uriDeleteSession = "session.delete"
 )
+
+// CheckSession creates a new session in serviceRegistry
+func CheckSession(apiKey string) (string, error) {
+	res, err := call(uriCheckSession, apiKey)
+	if err != nil {
+		return "", err
+	}
+	userID, ok := res.(string)
+	if !ok {
+		log.WithField("result", res).Warn("Invalid type of result on new session")
+		return "", berrors.ErrError
+	}
+
+	return userID, nil
+}
+
+// DeleteSession delete session with provided apiKey from serviceRegistry
+func DeleteSession(apiKey string) error {
+	_, err := call(uriDeleteSession, apiKey)
+
+	return err
+}
 
 // NewSession creates a new session in serviceRegistry
 func NewSession(userID string) (string, error) {
@@ -32,13 +55,6 @@ func NewSession(userID string) (string, error) {
 	}
 
 	return apiKey, nil
-}
-
-// DeleteSession delete session with provided apiKey from serviceRegistry
-func DeleteSession(apiKey string) error {
-	_, err := call(uriDeleteSession, apiKey)
-
-	return err
 }
 
 func call(uri string, args ...interface{}) (interface{}, error) {

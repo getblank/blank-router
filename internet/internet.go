@@ -41,7 +41,7 @@ func init() {
 
 func commonSettingsHandler(c echo.Context) error {
 	t := taskq.Task{
-		Type:      taskq.CommonSettings,
+		Type:      taskq.UserConfig,
 		Arguments: map[string]interface{}{},
 	}
 	lang := c.QueryParam("lang")

@@ -29,11 +29,13 @@ const (
 
 var (
 	rgxRPC = rgx.New(`^com\.stores\.(?P<store>[a-zA-Z_]*).(?P<command>[a-z\-]*)$`)
+	w      = wango.New()
 )
 
 func wampInit() *wango.Wango {
-	w := wango.New()
 	w.StringMode()
+	w.SetSessionOpenCallback(sessionOpenCallback)
+	w.SetSessionCloseCallback(sessionCloseCallback)
 
 	w.RegisterRPCHandler(uriSignIn, signInHandler)
 	w.RegisterRPCHandler(uriState, stateHandler)
@@ -43,7 +45,18 @@ func wampInit() *wango.Wango {
 	w.RegisterRPCHandler(uriResetPasswordRequest, anyHandler)
 	w.RegisterRPCHandler(uriResetPassword, anyHandler)
 
+	w.RegisterSubHandler(uriSubUser, subUserHandler, nil)
+	w.RegisterSubHandler(uriSubConfig, subConfigHandler, nil)
+
 	return w
+}
+
+func sessionOpenCallback(c *wango.Conn) {
+
+}
+
+func sessionCloseCallback(c *wango.Conn) {
+
 }
 
 func anyHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -54,6 +67,49 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	if len(args) < 2 {
 		return nil, berrors.ErrInvalidArguments
 	}
+	login, ok := args[0].(string)
+	if !ok {
+		return nil, berrors.ErrInvalidArguments
+	}
+	if login == "$userKey$" {
+		apiKey, ok := args[1].(string)
+		if !ok {
+			return nil, berrors.ErrInvalidArguments
+		}
+		userID, err := intranet.CheckSession(apiKey)
+		if err != nil {
+			return nil, err
+		}
+		t := taskq.Task{
+			Type:   taskq.DbGet,
+			UserID: "root",
+			Store:  "users",
+			Arguments: map[string]interface{}{
+				"_id": userID,
+			},
+		}
+		resChan := taskq.Push(t)
+
+		res := <-resChan
+
+		if res.Err != "" {
+			return nil, errors.New(res.Err)
+		}
+		user, ok := res.Result.(map[string]interface{})
+		if !ok {
+			log.WithField("result", res.Result).Warn("Invalid type of task result")
+			return nil, berrors.ErrError
+		}
+
+		c.SetExtra(credentials{userID, apiKey})
+		result := map[string]interface{}{
+			"key":  apiKey,
+			"user": user,
+		}
+
+		return result, nil
+	}
+
 	t := taskq.Task{
 		Type: taskq.Auth,
 		Arguments: map[string]interface{}{
@@ -67,9 +123,14 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	if res.Err != "" {
 		return nil, errors.New(res.Err)
 	}
-	userID, ok := res.Result.(string)
+	user, ok := res.Result.(map[string]interface{})
 	if !ok {
 		log.WithField("result", res.Result).Warn("Invalid type of result on authentication")
+		return nil, berrors.ErrError
+	}
+	userID, ok := user["_id"].(string)
+	if !ok {
+		log.WithField("user._id", user["_id"]).Warn("Invalid type of user._id")
 		return nil, berrors.ErrError
 	}
 
@@ -79,7 +140,12 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	}
 	c.SetExtra(credentials{userID, apiKey})
 
-	return apiKey, nil
+	result := map[string]interface{}{
+		"key":  apiKey,
+		"user": user,
+	}
+
+	return result, nil
 }
 
 func signOutHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {

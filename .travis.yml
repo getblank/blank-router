@@ -1,0 +1,19 @@
+language: go
+
+go:
+  - 1.6
+
+install:
+  - go get golang.org/x/net/websocket
+  - go get github.com/pkg/errors
+  - go get github.com/getblank/uuid
+  - go get github.com/Sirupsen/logrus
+  - go get github.com/getblank/wango
+  - go get github.com/getblank/rgx
+  - go get github.com/labstack/echo
+  - go get github.com/labstack/echo/engine/standard
+  - go get github.com/labstack/echo/middleware
+
+
+script:
+  - $HOME/gopath/bin/goveralls -service=travis-ci

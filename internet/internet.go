@@ -6,6 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/websocket"
 
+	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/taskq"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
@@ -35,6 +36,10 @@ func init() {
 	e.Static("/js", "static/js")
 
 	e.Get("/common-settings", commonSettingsHandler)
+
+	intranet.OnEvent(func(uri string, event interface{}, connIDs []string) {
+		w.SendEvent(uri, event, connIDs)
+	})
 
 	go e.Run(standard.New(":" + port))
 }

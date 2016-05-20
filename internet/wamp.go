@@ -47,6 +47,7 @@ func wampInit() *wango.Wango {
 
 	w.RegisterSubHandler(uriSubUser, subUserHandler, nil)
 	w.RegisterSubHandler(uriSubConfig, subConfigHandler, nil)
+	w.RegisterSubHandler(uriSubStores, nil, nil)
 
 	return w
 }
@@ -82,7 +83,7 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		}
 		t := taskq.Task{
 			Type:   taskq.DbGet,
-			UserID: "root",
+			UserID: "00000000-0000-0000-0000-000000000000",
 			Store:  "users",
 			Arguments: map[string]interface{}{
 				"_id": userID,

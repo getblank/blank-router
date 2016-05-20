@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	srClient *wango.Wango
-	srLocker sync.RWMutex
+	srClient       *wango.Wango
+	srLocker       sync.RWMutex
+	onEventHandler = func(string, interface{}, []string) {}
 )
 
 const (
@@ -57,6 +58,10 @@ func NewSession(userID string) (string, error) {
 	return apiKey, nil
 }
 
+func OnEvent(fn func(string, interface{}, []string)) {
+	onEventHandler = fn
+}
+
 func call(uri string, args ...interface{}) (interface{}, error) {
 	srLocker.RLock()
 	defer srLocker.RUnlock()
@@ -73,6 +78,7 @@ func connectedToSR(w *wango.Wango) {
 	srLocker.Unlock()
 
 	srClient.Call("register", map[string]interface{}{"type": "taskQueue", "port": "2345"})
+	srClient.Subscribe("events", srEventHandler)
 }
 
 func connectToSr() {
@@ -95,4 +101,48 @@ func onDisconnect(c *wango.Conn) {
 	srClient = nil
 	srLocker.Unlock()
 	connectToSr()
+}
+
+func srEventHandler(_ string, _event interface{}) {
+	data, ok := _event.(map[string]interface{})
+	if !ok {
+		log.WithField("data", _event).Warn(`Invalid data in "events" event`)
+		return
+	}
+	_uri, ok := data["uri"]
+	if !ok {
+		log.Warn(`No "uri" field in data in "events" event`)
+		return
+	}
+	uri, ok := _uri.(string)
+	if !ok {
+		log.WithField("uri", _uri).Warn(`"uri" field in "events" event is not a string`)
+		return
+	}
+	_subscribersInterface, ok := data["subscribers"]
+	if !ok {
+		log.Warn(`No "subscribers" field in "events" event`)
+		return
+	}
+	event, ok := data["event"]
+	if !ok {
+		log.Warn(`No "event" field in data in "events" event`)
+		return
+	}
+	_subscribers, ok := _subscribersInterface.([]interface{})
+	if !ok {
+		log.WithField("subscribers", _subscribersInterface).Warn(`"subscribers" field in "events" event is not an array`)
+		return
+	}
+	subscribers := make([]string, len(_subscribers))
+	for i, s := range _subscribers {
+		subscriber, ok := s.(string)
+		if !ok {
+			log.WithField("subscriber", s).Warn(`"subscriber" in array field in "events" event is not a string`)
+			return
+		}
+		subscribers[i] = subscriber
+	}
+
+	onEventHandler(uri, event, subscribers)
 }

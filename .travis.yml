@@ -13,7 +13,3 @@ install:
   - go get github.com/labstack/echo
   - go get github.com/labstack/echo/engine/standard
   - go get github.com/labstack/echo/middleware
-
-
-script:
-  - $HOME/gopath/bin/goveralls -service=travis-ci

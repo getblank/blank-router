@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	getTask   = "get"
-	doneTask  = "done"
-	errorTask = "error"
+	getTaskURI   = "get"
+	doneTaskURI  = "done"
+	errorTaskURI = "error"
+	publishURI   = "publish"
 )
 
 func taskGetHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -77,14 +78,40 @@ func internalCloseCallback(c *wango.Conn) {
 
 }
 
+// args: uri string, event interface{}, subscribers array of connIDs
+// This data will be transferred sent as event on "events" topic
+func publishHandler(c *wango.Conn, _uri string, args ...interface{}) (interface{}, error) {
+	uri, ok := args[0].(string)
+	if !ok {
+		return nil, berrors.ErrInvalidArguments
+	}
+	_subscribers, ok := args[2].([]interface{})
+	if !ok {
+		return nil, berrors.ErrInvalidArguments
+	}
+	subscribers := make([]string, len(_subscribers))
+	for k, v := range _subscribers {
+		connID, ok := v.(string)
+		if !ok {
+			log.WithField("connID", connID).Warn("ConnID is not a string in 'publish' RPC call")
+			continue
+		}
+		subscribers[k] = connID
+	}
+	onEventHandler(uri, args[1], subscribers)
+
+	return nil, nil
+}
+
 func runServer() {
 	wamp := wango.New()
 	wamp.SetSessionOpenCallback(internalOpenCallback)
 	wamp.SetSessionCloseCallback(internalCloseCallback)
 
-	wamp.RegisterRPCHandler(getTask, taskGetHandler)
-	wamp.RegisterRPCHandler(doneTask, taskDoneHandler)
-	wamp.RegisterRPCHandler(errorTask, taskErrorHandler)
+	wamp.RegisterRPCHandler(getTaskURI, taskGetHandler)
+	wamp.RegisterRPCHandler(doneTaskURI, taskDoneHandler)
+	wamp.RegisterRPCHandler(errorTaskURI, taskErrorHandler)
+	wamp.RegisterRPCHandler(publishURI, publishHandler)
 
 	s := new(websocket.Server)
 	s.Handshake = func(c *websocket.Config, r *http.Request) error {

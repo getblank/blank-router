@@ -19,6 +19,7 @@ install:
   - go get github.com/labstack/echo/engine/standard
   - go get github.com/labstack/echo/middleware
   - go get github.com/spf13/cobra
+script: go get -t -v ./...
 after_success:
 - curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-$TRAVIS_OS_NAME/blank-router
 - curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$TRAVIS_OS_NAME/blank-router

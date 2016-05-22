@@ -17,9 +17,12 @@ var (
 )
 
 const (
-	uriNewSession    = "session.new"
-	uriCheckSession  = "session.check"
-	uriDeleteSession = "session.delete"
+	uriNewSession       = "session.new"
+	uriCheckSession     = "session.check"
+	uriDeleteSession    = "session.delete"
+	uriSubscribed       = "session.subscribed"
+	uriUnsubscribed     = "session.unsubscribed"
+	uriDeleteConnection = "session.delete-connection"
 )
 
 // CheckSession creates a new session in serviceRegistry
@@ -59,6 +62,25 @@ func NewSession(userID string) (string, error) {
 	return apiKey, nil
 }
 
+// AddSubscription sends subscription info to session store.
+func AddSubscription(apiKey, connID, uri string, extra interface{}) error {
+	_, err := call(uriSubscribed, apiKey, connID, uri, extra)
+	return err
+}
+
+// DeleteConnection sends delete connection event to sessions store
+func DeleteConnection(apiKey, uri string) error {
+	_, err := call(uriUnsubscribed, apiKey, uri)
+	return err
+}
+
+// DeleteSubscription sends delete subscription event to sessions store
+func DeleteSubscription(apiKey, connID, uri string) error {
+	_, err := call(uriUnsubscribed, apiKey, connID, uri)
+	return err
+}
+
+// OnEvent sets intranet event handler
 func OnEvent(fn func(string, interface{}, []string)) {
 	onEventHandler = fn
 }

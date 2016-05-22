@@ -45,9 +45,9 @@ func wampInit() *wango.Wango {
 	w.RegisterRPCHandler(uriResetPasswordRequest, anyHandler)
 	w.RegisterRPCHandler(uriResetPassword, anyHandler)
 
-	w.RegisterSubHandler(uriSubUser, subUserHandler, nil)
-	w.RegisterSubHandler(uriSubConfig, subConfigHandler, nil)
-	w.RegisterSubHandler(uriSubStores, nil, nil)
+	w.RegisterSubHandler(uriSubUser, subUserHandler, nil, nil)
+	w.RegisterSubHandler(uriSubConfig, subConfigHandler, nil, nil)
+	w.RegisterSubHandler(uriSubStores, subStoresHandler, unsubStoresHandler, nil)
 
 	return w
 }
@@ -57,7 +57,7 @@ func sessionOpenCallback(c *wango.Conn) {
 }
 
 func sessionCloseCallback(c *wango.Conn) {
-
+	// intranet.
 }
 
 func anyHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -180,6 +180,10 @@ func rgxRpcHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		if !ok {
 			log.WithField("extra", extra).Warn("Invalid type of extra on connection when rpx handler")
 			return nil, berrors.ErrError
+		}
+		_, err := intranet.CheckSession(cred.apiKey)
+		if err != nil {
+			return nil, berrors.ErrForbidden
 		}
 		userID = cred.userID
 	}

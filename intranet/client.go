@@ -6,6 +6,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/getblank/blank-router/berrors"
+	"github.com/getblank/blank-router/taskq"
 	"github.com/getblank/wango"
 )
 
@@ -79,6 +80,7 @@ func connectedToSR(w *wango.Wango) {
 
 	srClient.Call("register", map[string]interface{}{"type": "taskQueue", "port": "2345"})
 	srClient.Subscribe("events", srEventHandler)
+	srClient.Subscribe("config", configUpdateHandler)
 }
 
 func connectToSr() {
@@ -145,4 +147,23 @@ func srEventHandler(_ string, _event interface{}) {
 	}
 
 	onEventHandler(uri, event, subscribers)
+}
+
+func configUpdateHandler(_ string, _event interface{}) {
+	conf, ok := _event.(map[string]interface{})
+	if !ok {
+		return
+	}
+	for store := range conf {
+		t := taskq.Task{
+			Type:   taskq.StoreLifeCycle,
+			UserID: "system",
+			Store:  store,
+			Arguments: map[string]interface{}{
+				"event": "didStart",
+			},
+		}
+		log.Info(t)
+		taskq.Push(t)
+	}
 }

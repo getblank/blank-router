@@ -23,6 +23,7 @@ const (
 	DbAction        = "action"
 	HTTPHook        = "httpHook"
 	ScheduledScript = "scheduledScript"
+	StoreLifeCycle  = "storeLifeCycle"
 )
 
 var (

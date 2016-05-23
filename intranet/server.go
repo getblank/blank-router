@@ -1,6 +1,7 @@
 package intranet
 
 import (
+	"errors"
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
@@ -16,6 +17,7 @@ const (
 	doneTaskURI  = "done"
 	errorTaskURI = "error"
 	publishURI   = "publish"
+	cronRunURI   = "cron.run"
 )
 
 func taskGetHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -70,6 +72,39 @@ func taskErrorHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 	return nil, nil
 }
 
+func cronRunHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	log.Info(uri, args)
+	if len(args) < 2 {
+		log.WithField("argumentsLength", len(args)).Warn("Invalid cron.run RPC")
+		return nil, berrors.ErrInvalidArguments
+	}
+	storeName, ok := args[0].(string)
+	if !ok {
+		log.WithField("storeName", args[0]).Warn("Invalid storeName when cron.run RPC")
+		return nil, berrors.ErrInvalidArguments
+	}
+	index, ok := args[1].(float64)
+	if !ok {
+		log.WithField("index", args[1]).Warn("Invalid task index when cron.run RPC")
+		return nil, berrors.ErrInvalidArguments
+	}
+	t := taskq.Task{
+		Type:   taskq.ScheduledScript,
+		Store:  storeName,
+		UserID: "system",
+		Arguments: map[string]interface{}{
+			"taskIndex": index,
+		},
+	}
+	resChan := taskq.Push(t)
+
+	res := <-resChan
+	if res.Err != "" {
+		return nil, errors.New(res.Err)
+	}
+	return res.Result, nil
+}
+
 func internalOpenCallback(c *wango.Conn) {
 	println("Connected client", c.ID())
 }
@@ -112,6 +147,7 @@ func runServer() {
 	wamp.RegisterRPCHandler(doneTaskURI, taskDoneHandler)
 	wamp.RegisterRPCHandler(errorTaskURI, taskErrorHandler)
 	wamp.RegisterRPCHandler(publishURI, publishHandler)
+	wamp.RegisterRPCHandler(cronRunURI, cronRunHandler)
 
 	s := new(websocket.Server)
 	s.Handshake = func(c *websocket.Config, r *http.Request) error {

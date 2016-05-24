@@ -100,7 +100,7 @@ func connectedToSR(w *wango.Wango) {
 	srClient = w
 	srLocker.Unlock()
 
-	srClient.Call("register", map[string]interface{}{"type": "taskQueue", "port": "2345"})
+	srClient.Call("register", map[string]interface{}{"type": "taskQueue", "port": listeningPort})
 	srClient.Subscribe("events", srEventHandler)
 	srClient.Subscribe("config", configUpdateHandler)
 }

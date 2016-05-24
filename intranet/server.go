@@ -18,6 +18,7 @@ const (
 	errorTaskURI = "error"
 	publishURI   = "publish"
 	cronRunURI   = "cron.run"
+	listeningPort = "2345"
 )
 
 func taskGetHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -157,8 +158,8 @@ func runServer() {
 		wamp.WampHandler(ws, nil)
 	}
 	http.Handle("/", s)
-
-	err := http.ListenAndServe(":2345", nil)
+	log.Info("Will listen for connection on port ",listeningPort)
+	err := http.ListenAndServe(":" + listeningPort, nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}

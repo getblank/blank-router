@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -78,6 +79,18 @@ func Push(t Task) chan Result {
 	resultLocker.Unlock()
 	mainQueue <- t
 	return ch
+}
+
+// PushAndGetResult is the alternative way to push task. It returns result and error instead of channel
+func PushAndGetResult(t Task) (interface{}, error) {
+	resChan := Push(t)
+
+	res := <-resChan
+	if res.Err != "" {
+		return nil, errors.New(res.Err)
+	}
+
+	return res.Result, nil
 }
 
 // Shift returns task from the queue

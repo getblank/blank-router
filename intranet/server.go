@@ -3,6 +3,7 @@ package intranet
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/getblank/wango"
@@ -13,12 +14,17 @@ import (
 )
 
 const (
-	getTaskURI   = "get"
-	doneTaskURI  = "done"
-	errorTaskURI = "error"
-	publishURI   = "publish"
-	cronRunURI   = "cron.run"
+	getTaskURI    = "get"
+	doneTaskURI   = "done"
+	errorTaskURI  = "error"
+	publishURI    = "publish"
+	cronRunURI    = "cron.run"
 	listeningPort = "2345"
+	uriSubStores  = "com.stores"
+)
+
+var (
+	wampServer = wango.New()
 )
 
 func taskGetHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -74,7 +80,6 @@ func taskErrorHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 }
 
 func cronRunHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
-	log.Info(uri, args)
 	if len(args) < 2 {
 		log.WithField("argumentsLength", len(args)).Warn("Invalid cron.run RPC")
 		return nil, berrors.ErrInvalidArguments
@@ -117,10 +122,15 @@ func internalCloseCallback(c *wango.Conn) {
 // args: uri string, event interface{}, subscribers array of connIDs
 // This data will be transferred sent as event on "events" topic
 func publishHandler(c *wango.Conn, _uri string, args ...interface{}) (interface{}, error) {
+	if len(args) < 3 {
+		return nil, berrors.ErrInvalidArguments
+	}
 	uri, ok := args[0].(string)
 	if !ok {
 		return nil, berrors.ErrInvalidArguments
 	}
+	wampServer.Publish(uri, args[1])
+
 	_subscribers, ok := args[2].([]interface{})
 	if !ok {
 		return nil, berrors.ErrInvalidArguments
@@ -139,27 +149,53 @@ func publishHandler(c *wango.Conn, _uri string, args ...interface{}) (interface{
 	return nil, nil
 }
 
-func runServer() {
-	wamp := wango.New()
-	wamp.SetSessionOpenCallback(internalOpenCallback)
-	wamp.SetSessionCloseCallback(internalCloseCallback)
+func subStoresHandler(c *wango.Conn, _uri string, args ...interface{}) (interface{}, error) {
+	storeName := strings.TrimLeft(_uri, uriSubStores)
+	t := taskq.Task{
+		Store:  storeName,
+		Type:   taskq.DbFind,
+		UserID: "root",
+		Arguments: map[string]interface{}{
+			"query": map[string]interface{}{},
+			"take":  1,
+		},
+	}
+	_res, err := taskq.PushAndGetResult(t)
+	if err != nil {
+		return nil, err
+	}
+	result := map[string]interface{}{"event": "init", "data": nil}
+	res, ok := _res.(map[string]interface{})
+	if !ok {
+		result["data"] = _res
+		return result, nil
+	}
+	result["data"] = res["items"]
+	return result, nil
+}
 
-	wamp.RegisterRPCHandler(getTaskURI, taskGetHandler)
-	wamp.RegisterRPCHandler(doneTaskURI, taskDoneHandler)
-	wamp.RegisterRPCHandler(errorTaskURI, taskErrorHandler)
-	wamp.RegisterRPCHandler(publishURI, publishHandler)
-	wamp.RegisterRPCHandler(cronRunURI, cronRunHandler)
+func runServer() {
+	wampServer.SetSessionOpenCallback(internalOpenCallback)
+	wampServer.SetSessionCloseCallback(internalCloseCallback)
+
+	wampServer.RegisterRPCHandler(getTaskURI, taskGetHandler)
+	wampServer.RegisterRPCHandler(doneTaskURI, taskDoneHandler)
+	wampServer.RegisterRPCHandler(errorTaskURI, taskErrorHandler)
+	wampServer.RegisterRPCHandler(publishURI, publishHandler)
+	wampServer.RegisterRPCHandler(cronRunURI, cronRunHandler)
+
+	wampServer.RegisterSubHandler(uriSubStores, subStoresHandler, nil, nil)
 
 	s := new(websocket.Server)
 	s.Handshake = func(c *websocket.Config, r *http.Request) error {
 		return nil
 	}
 	s.Handler = func(ws *websocket.Conn) {
-		wamp.WampHandler(ws, nil)
+		wampServer.WampHandler(ws, nil)
 	}
 	http.Handle("/", s)
-	log.Info("Will listen for connection on port ",listeningPort)
-	err := http.ListenAndServe(":" + listeningPort, nil)
+	log.Info("Will listen for connection on port ", listeningPort)
+	err := http.ListenAndServe(":"+listeningPort, nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}

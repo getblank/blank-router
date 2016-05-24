@@ -106,6 +106,7 @@ func connectedToSR(w *wango.Wango) {
 }
 
 func connectToSr() {
+	reconnectChan := make(chan struct{})
 	for {
 		log.Info("Attempt to connect to SR: ", srAddress)
 		client, err := wango.Connect(srAddress, "http://127.0.0.1:1234")
@@ -114,20 +115,21 @@ func connectToSr() {
 			time.Sleep(time.Second)
 			continue
 		}
-		client.SetSessionCloseCallback(onDisconnect)
+		client.SetSessionCloseCallback(func(c *wango.Conn) {
+			srLocker.Lock()
+			srClient = nil
+			srLocker.Unlock()
+			reconnectChan <- struct{}{}
+		})
 		connectedToSR(client)
-		break
+		<-reconnectChan
 	}
 }
 
-func onDisconnect(c *wango.Conn) {
-	srLocker.Lock()
-	srClient = nil
-	srLocker.Unlock()
-	connectToSr()
-}
-
 func srEventHandler(_ string, _event interface{}) {
+	if _event == nil {
+		return
+	}
 	data, ok := _event.(map[string]interface{})
 	if !ok {
 		log.WithField("data", _event).Warn(`Invalid data in "events" event`)

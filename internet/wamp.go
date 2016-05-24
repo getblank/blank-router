@@ -39,6 +39,7 @@ func wampInit() *wango.Wango {
 
 	w.RegisterRPCHandler(uriSignIn, signInHandler)
 	w.RegisterRPCHandler(uriState, stateHandler)
+	w.RegisterRPCHandler(uriAction, actionHandler)
 	w.RegisterRPCHandler(rgxRPC.Regexp, rgxRpcHandler)
 
 	w.RegisterRPCHandler(uriSignUp, anyHandler)
@@ -62,6 +63,54 @@ func sessionCloseCallback(c *wango.Conn) {
 
 func anyHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
 	return "8===>", nil
+}
+
+func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	if len(args) < 3 {
+		return nil, berrors.ErrInvalidArguments
+	}
+	var userID string
+	extra := c.GetExtra()
+	if extra != nil {
+		cred, ok := extra.(credentials)
+		if !ok {
+			log.WithField("extra", extra).Warn("Invalid type of extra on connection when rpx handler")
+			return nil, berrors.ErrError
+		}
+		_, err := intranet.CheckSession(cred.apiKey)
+		if err != nil {
+			return nil, berrors.ErrForbidden
+		}
+		userID = cred.userID
+	}
+	store, ok := args[0].(string)
+	if !ok {
+		return nil, berrors.ErrInvalidArguments
+	}
+	actionId, ok := args[1].(string)
+	if !ok {
+		return nil, berrors.ErrInvalidArguments
+	}
+	t := taskq.Task{
+		Type:   taskq.DbAction,
+		Store:  store,
+		UserID: userID,
+		Arguments: map[string]interface{}{
+			"itemId":   args[2],
+			"actionId": actionId,
+		},
+	}
+	if len(args) > 3 {
+		t.Arguments["data"] = args[3]
+	}
+	resChan := taskq.Push(t)
+
+	res := <-resChan
+	if res.Err != "" {
+		return nil, errors.New(res.Err)
+	}
+
+	return res.Result, nil
 }
 
 func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {

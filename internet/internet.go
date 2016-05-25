@@ -38,8 +38,6 @@ func init() {
 
 	e.GET("/common-settings", commonSettingsHandler)
 
-	e.Any("/hooks/:store/*", httpHookHandler)
-
 	config.OnUpdate(onConfigUpdate)
 
 	intranet.OnEvent(func(uri string, event interface{}, connIDs []string) {

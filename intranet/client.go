@@ -1,13 +1,16 @@
 package intranet
 
 import (
+	"encoding/json"
 	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/getblank/blank-router/berrors"
-	"github.com/getblank/blank-router/taskq"
 	"github.com/getblank/wango"
+
+	"github.com/getblank/blank-router/berrors"
+	"github.com/getblank/blank-router/config"
+	"github.com/getblank/blank-router/taskq"
 )
 
 var (
@@ -174,10 +177,17 @@ func srEventHandler(_ string, _event interface{}) {
 }
 
 func configUpdateHandler(_ string, _event interface{}) {
-	conf, ok := _event.(map[string]interface{})
-	if !ok {
+	encoded, err := json.Marshal(_event)
+	if err != nil {
+		log.WithError(err).Warn("Can't marshal arrived config")
 		return
 	}
+	var conf map[string]config.Store
+	err = json.Unmarshal(encoded, &conf)
+	if err != nil {
+		log.WithError(err).Error("Can't unmarshal arrived config")
+	}
+
 	for store := range conf {
 		t := taskq.Task{
 			Type:   taskq.StoreLifeCycle,
@@ -187,7 +197,8 @@ func configUpdateHandler(_ string, _event interface{}) {
 				"event": "didStart",
 			},
 		}
-		log.Info(t)
 		taskq.Push(t)
 	}
+
+	config.ConfigUpdate(conf)
 }

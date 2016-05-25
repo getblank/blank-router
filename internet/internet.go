@@ -6,6 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"golang.org/x/net/websocket"
 
+	"github.com/getblank/blank-router/config"
 	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/taskq"
 	"github.com/labstack/echo"
@@ -15,11 +16,11 @@ import (
 
 var (
 	port = "8080"
+	e    = echo.New()
 )
 
 func init() {
 	log.Info("Init internet server on port ", port)
-	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
@@ -35,7 +36,11 @@ func init() {
 	e.Static("/css", "static/css")
 	e.Static("/js", "static/js")
 
-	e.Get("/common-settings", commonSettingsHandler)
+	e.GET("/common-settings", commonSettingsHandler)
+
+	e.Any("/hooks/:store/*", httpHookHandler)
+
+	config.OnUpdate(onConfigUpdate)
 
 	intranet.OnEvent(func(uri string, event interface{}, connIDs []string) {
 		w.SendEvent(uri, event, connIDs)

@@ -132,7 +132,7 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		}
 		t := taskq.Task{
 			Type:   taskq.DbGet,
-			UserID: "00000000-0000-0000-0000-000000000000",
+			UserID: "root",
 			Store:  "users",
 			Arguments: map[string]interface{}{
 				"_id": userID,

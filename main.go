@@ -8,24 +8,27 @@ import (
 	log "github.com/Sirupsen/logrus"
 	_ "github.com/getblank/blank-router/internet"
 	"github.com/getblank/blank-router/intranet"
-)
-
-var (
-	srAddress string
+	"github.com/getblank/blank-router/settings"
 )
 
 func main() {
 	// log.SetFormatter(&log.JSONFormatter{})
+	var srAddress *string
+	var devMode *bool
+
 	rootCmd := &cobra.Command{
 		Use:   "router",
 		Short: "Router for Blank platform",
 		Long:  "The next generation of web applications. This is the router subsytem.",
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Info("Router started")
-			intranet.Init(srAddress)
+			settings.SRAddress = *srAddress
+			settings.DevMode = *devMode
+			intranet.Init()
 		},
 	}
-	srAddress = *(rootCmd.PersistentFlags().StringP("service-registry", "s", "ws://localhost:1234", "Service registry uri"))
+	srAddress = rootCmd.PersistentFlags().StringP("service-registry", "s", "ws://localhost:1234", "Service registry uri")
+	devMode = rootCmd.PersistentFlags().BoolP("dev-mode", "d", false, "Development mode")
 
 	if err := rootCmd.Execute(); err != nil {
 		println(err.Error())

@@ -2,6 +2,7 @@ package taskq
 
 import (
 	"sync"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
@@ -37,6 +38,8 @@ var (
 
 	sequence       int
 	sequenceLocker sync.Mutex
+
+	errTimeout = errors.New("Timeout")
 )
 
 // Result is a struct for result of task
@@ -53,6 +56,7 @@ type Task struct {
 	Store     string                 `json:"store"`
 	Type      string                 `json:"type"`
 	Arguments map[string]interface{} `json:"args"`
+	rotten    *bool
 }
 
 // Done must be called when task is done
@@ -82,15 +86,31 @@ func Push(t Task) chan Result {
 }
 
 // PushAndGetResult is the alternative way to push task. It returns result and error instead of channel
-func PushAndGetResult(t Task) (interface{}, error) {
+// Second argument is a task timeout. If provided, when timeout reached and task will not completed yet,
+// error returns with nil result
+func PushAndGetResult(t Task, timeout time.Duration) (interface{}, error) {
+	var rotten bool
+	t.rotten = &rotten
 	resChan := Push(t)
-
-	res := <-resChan
-	if res.Err != "" {
-		return nil, errors.New(res.Err)
+	if timeout == 0 {
+		res := <-resChan
+		if res.Err != "" {
+			return nil, errors.New(res.Err)
+		}
+		return res.Result, nil
 	}
 
-	return res.Result, nil
+	timer := time.NewTimer(timeout)
+	select {
+	case <-timer.C:
+		rotten = true
+		return nil, errTimeout
+	case res := <-resChan:
+		if res.Err != "" {
+			return nil, errors.New(res.Err)
+		}
+		return res.Result, nil
+	}
 }
 
 // Shift returns task from the queue
@@ -101,6 +121,9 @@ func Shift() Task {
 
 // UnShift returns task to the queue
 func UnShift(t Task) {
+	if *(t.rotten) {
+		return
+	}
 	extraQueue <- t
 }
 
@@ -113,6 +136,13 @@ func nextID() int {
 
 func queuing() {
 	for {
+		// This is for rising extraQueue priority
+		select {
+		case t := <-extraQueue:
+			shiftQueue <- t
+		default:
+		}
+
 		select {
 		case t := <-extraQueue:
 			shiftQueue <- t

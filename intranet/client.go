@@ -10,6 +10,7 @@ import (
 
 	"github.com/getblank/blank-router/berrors"
 	"github.com/getblank/blank-router/config"
+	"github.com/getblank/blank-router/settings"
 	"github.com/getblank/blank-router/taskq"
 )
 
@@ -98,7 +99,7 @@ func call(uri string, args ...interface{}) (interface{}, error) {
 }
 
 func connectedToSR(w *wango.Wango) {
-	log.Info("Connected to SR: ", srAddress)
+	log.Info("Connected to SR: ", settings.SRAddress)
 	srLocker.Lock()
 	srClient = w
 	srLocker.Unlock()
@@ -111,8 +112,8 @@ func connectedToSR(w *wango.Wango) {
 func connectToSr() {
 	reconnectChan := make(chan struct{})
 	for {
-		log.Info("Attempt to connect to SR: ", srAddress)
-		client, err := wango.Connect(srAddress, "http://127.0.0.1:1234")
+		log.Info("Attempt to connect to SR: ", settings.SRAddress)
+		client, err := wango.Connect(settings.SRAddress, "http://127.0.0.1:1234")
 		if err != nil {
 			log.Warn("Can'c connect to service registry: " + err.Error())
 			time.Sleep(time.Second)

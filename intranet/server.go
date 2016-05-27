@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/getblank/wango"
@@ -160,7 +161,7 @@ func subStoresHandler(c *wango.Conn, _uri string, args ...interface{}) (interfac
 			"take":  1,
 		},
 	}
-	_res, err := taskq.PushAndGetResult(t)
+	_res, err := taskq.PushAndGetResult(t, time.Second*10)
 	if err != nil {
 		return nil, err
 	}

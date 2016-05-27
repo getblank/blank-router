@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/getblank/blank-router/config"
 	"github.com/getblank/blank-router/intranet"
+	"github.com/getblank/blank-router/settings"
 	"github.com/getblank/blank-router/taskq"
 )
 
@@ -73,7 +75,11 @@ func onConfigUpdate(c map[string]config.Store) {
 						"hookIndex": hookIndex,
 					},
 				}
-				_res, err := taskq.PushAndGetResult(t)
+				timeout := time.Hour
+				if settings.DevMode {
+					timeout = time.Second * 10
+				}
+				_res, err := taskq.PushAndGetResult(t, timeout)
 				if err != nil {
 					return c.JSON(http.StatusSeeOther, err.Error())
 				}
@@ -124,7 +130,11 @@ func createHTTPActions(storeName string, actions []config.Action) {
 					"actionId": actionID,
 				},
 			}
-			_res, err := taskq.PushAndGetResult(t)
+			timeout := time.Hour
+			if settings.DevMode {
+				timeout = time.Second * 10
+			}
+			_res, err := taskq.PushAndGetResult(t, timeout)
 			if err != nil {
 				return c.JSON(http.StatusSeeOther, err.Error())
 			}

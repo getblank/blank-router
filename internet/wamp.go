@@ -1,6 +1,8 @@
 package internet
 
 import (
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/getblank/rgx"
 	"github.com/getblank/wango"
@@ -248,15 +250,15 @@ func rgxRpcHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		case "get":
 			t.Type = taskq.DbGet
 			t.Arguments = map[string]interface{}{"_id": args[0]}
-			return taskq.PushAndGetResult(t)
+			return taskq.PushAndGetResult(t, time.Second*5)
 		case "save":
 			t.Type = taskq.DbSet
 			t.Arguments = map[string]interface{}{"item": args[0]}
-			return taskq.PushAndGetResult(t)
+			return taskq.PushAndGetResult(t, time.Second*5)
 		case "delete":
 			t.Type = taskq.DbDelete
 			t.Arguments = map[string]interface{}{"_id": args[0]}
-			return taskq.PushAndGetResult(t)
+			return taskq.PushAndGetResult(t, time.Second*5)
 		case "push":
 			if len(args) < 3 {
 				return nil, berrors.ErrInvalidArguments
@@ -267,7 +269,7 @@ func rgxRpcHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 				"prop": args[1],
 				"data": args[2],
 			}
-			return taskq.PushAndGetResult(t)
+			return taskq.PushAndGetResult(t, time.Second*5)
 		case "load-refs":
 			if len(args) < 4 {
 				return nil, berrors.ErrInvalidArguments
@@ -279,13 +281,13 @@ func rgxRpcHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 				"selected": args[2],
 				"query":    args[3],
 			}
-			return taskq.PushAndGetResult(t)
+			return taskq.PushAndGetResult(t, time.Second*5)
 		case "find":
 			t.Type = taskq.DbFind
 			t.Arguments = map[string]interface{}{
 				"query": args[0],
 			}
-			return taskq.PushAndGetResult(t)
+			return taskq.PushAndGetResult(t, time.Second*5)
 		}
 	}
 	return nil, nil

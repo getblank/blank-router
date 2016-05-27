@@ -1,12 +1,6 @@
 package intranet
 
-var (
-	srAddress string
-)
-
-func Init(srAddr string) {
-	srAddress = srAddr
-
+func Init() {
 	go connectToSr()
 	runServer()
 }

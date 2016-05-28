@@ -121,7 +121,7 @@ func Shift() Task {
 
 // UnShift returns task to the queue
 func UnShift(t Task) {
-	if *(t.rotten) {
+	if t.rotten != nil && *(t.rotten) {
 		return
 	}
 	extraQueue <- t

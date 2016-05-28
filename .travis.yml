@@ -15,7 +15,7 @@ before_install:
   - go get -u github.com/labstack/echo/engine/standard
   - go get -u github.com/labstack/echo/middleware
   - go get -u github.com/spf13/cobra
-  - go get -u github.com/jteeuwen/go-bindata
+  - go get -u github.com/jteeuwen/go-bindata/...
   - go generate
 script: go get -t -v ./...
 after_success:

@@ -78,7 +78,7 @@ var SearchBox = React.createClass({
                     return;
                 }
                 if (self.isMounted()) {
-                    self.setState({ "optionsCount": res.fullCount, "options": res.items, "searching": false });
+                    self.setState({ "optionsCount": res.count, "options": res.items, "searching": false });
                 }
             }, function (error) {
                 console.log("Search error");

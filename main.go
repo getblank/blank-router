@@ -4,6 +4,7 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -25,6 +26,7 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Info("Router started")
 			settings.SRAddress = *srAddress
+			settings.SRHTTPAddress = "http:" + strings.TrimPrefix(*srAddress, "ws:")
 			settings.DevMode = *devMode
 			intranet.Init()
 		},

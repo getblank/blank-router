@@ -1,6 +1,7 @@
 package internet
 
 import (
+	"bytes"
 	"net/http"
 	"path"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/getblank/blank-router/config"
 	"github.com/getblank/blank-router/intranet"
+	"github.com/getblank/blank-router/settings"
 	"github.com/getblank/blank-router/taskq"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
@@ -41,14 +43,9 @@ func init() {
 		return c.HTML(http.StatusOK, string(content))
 	})
 	e.GET("/app.css", func(c echo.Context) error {
-		// need to request from blank-sr
 		return c.File("static/css/app.css")
-		// content, err := Asset("src/html/index.html")
-		// if err != nil {
-		// 	return c.HTML(http.StatusNotFound, "file not found")
-		// }
-		// return c.HTML(http.StatusOK, string(content))
 	})
+	e.GET("/assets/*", assetsHandler)
 
 	e.Static("/fonts", "static/fonts")
 	e.Static("/css", "static/css")
@@ -70,7 +67,6 @@ func staticFromAssets(root string) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			p := c.Request().URL().Path()
 			file := path.Clean(p)
-			log.Info("Requested path:", file)
 			switch {
 			case strings.HasPrefix(file, "/js"):
 				file = strings.TrimPrefix(file, "/js")
@@ -118,4 +114,60 @@ func commonSettingsHandler(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, res.Err)
 	}
 	return c.JSON(http.StatusOK, res.Result)
+}
+
+func assetsHandler(c echo.Context) error {
+	res, err := http.Get(settings.SRHTTPAddress + c.Request().URI())
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer(nil)
+	_, err = buf.ReadFrom(res.Body)
+	if err != nil {
+		log.WithError(err).Error("Can't read from SR responsed file")
+	}
+
+	c.Response().Header().Add("Content-Type", getContentType(c.Request().URI()))
+	_, err = c.Response().Write(buf.Bytes())
+	return err
+}
+
+func getContentType(uri string) string {
+	var contentType string
+	switch path.Ext(uri) {
+	case ".js":
+		contentType = "text/javascript"
+	case ".css":
+		contentType = "text/css"
+	case ".html":
+		contentType = "text/html"
+	case ".pdf":
+		contentType = "application/pdf"
+	case ".json":
+		contentType = "application/json"
+	case ".gif":
+		contentType = "image/gif"
+	case ".jpg", ".jpeg":
+		contentType = "image/jpeg"
+	case ".png":
+		contentType = "image/png"
+	case ".svg":
+		contentType = "image/svg+xml"
+	case ".ttf":
+		contentType = "application/x-font-ttf"
+	case ".otf":
+		contentType = "application/x-font-opentype"
+	case ".woff":
+		contentType = "application/font-woff"
+	case ".woff2":
+		contentType = "application/font-woff2"
+	case ".eot":
+		contentType = "application/vnd.ms-fontobject"
+	case ".sfnt":
+		contentType = "application/font-sfnt"
+
+	default:
+		contentType = "multipart/mixed"
+	}
+	return contentType
 }

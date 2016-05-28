@@ -1,9 +1,9 @@
 language: go
 os:
-- linux
-- osx
+  - linux
+  - osx
 go:
-- 1.6.2
+  - 1.6.2
 install:
   - go get golang.org/x/net/websocket
   - go get github.com/pkg/errors
@@ -15,7 +15,9 @@ install:
   - go get github.com/labstack/echo/engine/standard
   - go get github.com/labstack/echo/middleware
   - go get github.com/spf13/cobra
+  - go get github.com/jteeuwen/go-bindata
+before_script: go generate
 script: go get -t -v ./...
 after_success:
-- curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-$TRAVIS_OS_NAME/blank-router
-- curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$TRAVIS_OS_NAME/blank-router
+  - curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-$TRAVIS_OS_NAME/blank-router
+  - curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$TRAVIS_OS_NAME/blank-router

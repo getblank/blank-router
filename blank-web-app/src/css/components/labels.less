@@ -1,0 +1,96 @@
+@import "../variables";
+
+.item-labels {
+  .item-label {
+    font-weight: 300;
+    margin-right: 15px;
+    padding: .2em .6em .3em;
+    line-height: 1;
+    background: none;
+    color: #333;
+
+    display: inline-block;
+    &:last-of-type {
+      margin-right: 0 !important;
+    }
+  }
+
+  &.nav {
+    .item-label {
+      color: @darkText;
+      margin-right: 0;
+      padding: 0 8px;
+      line-height: @navHeight;
+    }
+  }
+
+  &.form {
+    & + h2 {
+      margin-top: 20px;
+    }
+    margin-left: 5px;
+    padding-bottom: 10px;
+    .labels-group {
+      margin-right: 15px;
+      &:last-of-type {
+        margin-right: 0;
+      }
+    }
+    .item-label {
+      margin-top: 15px;
+      border: 1px solid @darkText;
+      border-radius: 0;
+      font-size: @fs-labels;
+      color: @darkText;
+
+      -webkit-transform: skew(-20deg);
+      -moz-transform: skew(-20deg);
+      -o-transform: skew(-20deg);
+      transform: skew(-20deg);
+
+      span {
+        display: inline-block;
+      }
+      span, i {
+        -webkit-transform: skew(20deg);
+        -moz-transform: skew(20deg);
+        -o-transform: skew(20deg);
+        transform: skew(20deg);
+      }
+      i {
+        margin-right: 4px;
+      }
+    }
+  }
+
+  &.list {
+    .item-label {
+      margin-right: 5px;
+      padding: 0;
+      i {
+        margin-right: 5px;
+      }
+    }
+    .labels-group {
+      display: block;
+      min-height: 20px;
+      padding-top: 2px;
+    }
+  }
+}
+
+.items-list {
+  .item {
+    &.active {
+      .item-extra {
+        color: #CCC;
+      }
+    }
+    .item-extra {
+      color: #888;
+      span {
+        font-size: @fs-caption;
+      }
+    }
+  }
+}

@@ -1,0 +1,123 @@
+@import "../variables";
+@import "../helpers/vendor-prefixes";
+
+.pbx-operators {
+  .summary {
+    position: relative;
+    display: flex;
+    height: 94px;
+    background-color: #fff;
+    border-top: 1px solid @lightDivider;
+
+    .selected-call {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0 72px;
+      background-color: #fff;
+      visibility: hidden;
+      opacity: 0;
+      .transition(opacity .3s ease-in .2s, visibility 0s linear .5s;);
+
+      &.show {
+        visibility: visible;
+        opacity: 1;
+        .transition(opacity .3s ease-out, visibility 0s linear 0s;);
+      }
+    }
+
+    .charts,
+    .selected-call {
+      padding-left: 72px;
+      .stats {
+        span {
+          font-size: 24px;
+          min-width: 50px;
+        }
+      }
+    }
+    .campaigns {
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      margin-left: 72px;
+      .campaign {
+        flex-shrink: 0;
+        padding: 8px 24px;
+        border-left-width: 5px;
+        border-left-style: solid;
+        font-size: 13px;
+        font-weight: 300;
+        cursor: pointer;
+      }
+    }
+  }
+  .stats {
+    span {
+      min-width: 30px;
+    }
+    i.material-icons {
+      color: @lightSecondaryText;
+    }
+  }
+  .operators {
+    padding: 0 72px;
+    overflow-y: scroll;
+    .operator {
+      display: flex;
+      min-height: 128px;
+      margin-top: 14px;
+      .info {
+        position: relative;
+        width: 280px;
+        margin-bottom: 8px;
+        padding-left: 64px;
+        .icon {
+          position: absolute;
+          top: 0;
+          left: 0;
+        }
+        .name {
+          display: inline-block;
+          margin-bottom: 14px;
+          font-size: 20px;
+          font-weight: 300;
+        }
+        .item-actions {
+          margin-top: 8px;
+          //border-bottom: 1px solid @lightDivider;
+        }
+      }
+      .calls {
+        display: flex;
+        align-items: baseline;
+        .item {
+          display: inline-block;
+          margin-left: 8px;
+          margin-bottom: 14px;
+          border-width: 1px;
+          border-style: solid;
+          border-color: black;
+          border-radius: 2px;
+          padding: 4px;
+          font-size: 12px;
+          cursor: pointer;
+          i {
+            color: @lightSecondaryText;
+          }
+        }
+        .current-item {
+          .item();
+          margin-left: 0;
+          vertical-align: top;
+          background-color: black;
+          color: @darkText;
+        }
+        .queue {
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+.floating-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    width: 50px;
+
+    & > button {
+        display: block;
+        height: 100%;
+        width: 100%;
+        min-width: 0;
+        margin: 0 auto;
+        border-radius: 50%;
+        background-color: @accentColor;
+        color: @darkText;
+        z-index: 4;
+
+        &:hover {
+            background-color: darken(@accentColor, 5);
+        }
+
+        .keyframes(fade-out-in;{
+            0% { opacity: 1; color: transparent; }
+            50% { opacity: 0; width: 0; height: 0; color: transparent; }
+            100% { opacity: 1; color: transparent; }
+        });
+
+        &.reanimate {
+            .animation(fade-out-in .3s linear);
+        }
+    }
+}

@@ -1,0 +1,29 @@
+@import "../variables";
+
+.autocomplete {
+  position: relative;
+
+  .pd-picker {
+    max-height: 200px;
+    overflow-y: auto;
+    left: 0;
+    right: 0;
+    top: ~"calc(100% + 2px)";
+
+    .option {
+      padding: 2px;
+      cursor: pointer;
+      &:hover {
+        background-color: #eee;
+      }
+      &.selected {
+        background-color: #00e5ff;
+      }
+    }
+
+    &:before,
+    &:after {
+      display: none;
+    }
+  }
+}

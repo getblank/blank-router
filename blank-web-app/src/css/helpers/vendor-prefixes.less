@@ -1,0 +1,29 @@
+.animation(@a) {
+  -webkit-animation: @a;
+  -moz-animation: @a;
+  -ms-animation: @a;
+  -o-animation: @a;
+  animation: @a;
+}
+.keyframes (@name; @arguments) {
+	@-webkit-keyframes @name { @arguments(); }
+	@-moz-keyframes @name { @arguments(); }
+	@-ms-keyframes @name { @arguments(); }
+	@-o-keyframes @name { @arguments(); }
+	@keyframes @name { @arguments(); }
+}
+.transition(@transition) {
+  -webkit-transition: @transition;
+  -o-transition: @transition;
+  transition: @transition;
+}
+.transform(@transform) {
+  -webkit-transform: @transform;
+  -o-transform: @transform;
+  transform: @transform;
+}
+.box-shadow(@shadow) {
+  -webkit-box-shadow: @shadow;
+  -moz-box-shadow: @shadow;
+  box-shadow: @shadow;
+}

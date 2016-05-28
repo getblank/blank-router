@@ -1,0 +1,81 @@
+@import "../variables";
+
+.item-actions {
+  .action-form-modal {
+    position: absolute;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    padding: 72px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,.3);
+    overflow: auto;
+    z-index: 5;
+    .action-form {
+      width: 348px;
+      padding: 24px 24px 8px 24px;
+      background-color: #fff;
+      border-radius: 2px;
+      .btn-flat {
+        color: @baseColor;
+      }
+    }
+  }
+  &.item-view {
+    padding: 8px 0;
+    max-width: 450px;
+  }
+  &.header-view {
+
+  }
+  &.nav {
+    display: flex;
+    padding: 0 15px;
+    button,
+    .btn {
+      height: @navHeight;
+      font-size: @fs-menu;
+      line-height: @navHeight;
+    }
+    .btn-flat {
+      color: @darkText;
+    }
+    .btn-icon {
+      color: @darkText;
+      width: @navHeight;
+    }
+    .action-form-modal {
+      position: fixed;
+    }
+
+    button,
+    .btn,
+    .btn-flat,
+    .btn-icon {
+        box-shadow: none !important;
+        color: @darkText;
+        &:hover {
+            background-color: darken(@navBackground, 10);
+        }
+    }
+  }
+  &.form-field {
+    display: block !important;
+  }
+  button {
+    position: relative;
+    i.loader {
+      position: absolute;
+      top: 10px;
+      left: 25px;
+    }
+    span {
+      i + span {
+        margin-left: 5px;
+      }
+    }
+  }
+}

@@ -1,0 +1,74 @@
+@import "../variables";
+@import "../helpers/vendor-prefixes";
+
+.pd-tabs {
+  overflow-x: auto;
+  margin: 0 -24px;
+  padding: 0 24px;
+
+  .tabs {
+    white-space: nowrap;
+  }
+  button.btn-flat {
+    height: 42px;
+    padding: 0 24px;
+    margin: 0;
+    overflow: hidden;
+    vertical-align: bottom;
+    &.first {
+      margin-left: -24px;
+    }
+    &.last {
+      margin-right: -24px;
+    }
+
+    .keyframes(active-tab-animation;{
+            0% { opacity: 1; transform: scale(0); }
+            75% { opacity: 1; }
+            100% { opacity: 0; transform: scale(300); }
+        });
+    &:after {
+        position: absolute;
+        top: 5px;
+        left: 15%;
+        display: block;
+        height: 1px;
+        width: 1px;
+        content: " ";
+        border-radius: 50%;
+    }
+
+    &.right-animation:after {
+        top: 30px;
+        left: 85%;
+    }
+
+    &.active:hover {
+        background-color: transparent;
+    }
+    &.active:after {
+        background-color: rgba(203, 203, 203, .20);
+        opacity: 0;
+        .animation(active-tab-animation .4s cubic-bezier(0.7, 0, 1, 1));
+    }
+  }
+  .indicator {
+    div {
+      height: 2px;
+      //background-color: @accentColor;
+      background-color: #fff;
+      transition: all .2s ease-out;
+    }
+  }
+}
+
+.virtual-ref-list {
+  margin-bottom: 15px;
+  .pd-tabs {
+    .indicator {
+      div {
+        background-color: @baseColor600;
+      }
+    }
+  }
+}

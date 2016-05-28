@@ -1,0 +1,17 @@
+@import "../variables";
+
+.new-username {
+  position: relative;
+  .state-icon {
+    color: @lightSuccessText;
+    &.error {
+      color: @lightErrorText;
+    }
+  }
+  .state-icon,
+  .pd-loader {
+    position: absolute;
+    right: 4px;
+    top: 6px;
+  }
+}

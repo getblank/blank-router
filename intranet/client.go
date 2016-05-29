@@ -29,6 +29,12 @@ const (
 	uriDeleteConnection = "session.delete-connection"
 )
 
+type service struct {
+	Type    string `json:"type"`
+	Address string `json:"address"`
+	Port    string `json:"port"`
+}
+
 // CheckSession creates a new session in serviceRegistry
 func CheckSession(apiKey string) (string, error) {
 	res, err := call(uriCheckSession, apiKey)
@@ -107,6 +113,7 @@ func connectedToSR(w *wango.Wango) {
 	srClient.Call("register", map[string]interface{}{"type": "taskQueue", "port": listeningPort})
 	srClient.Subscribe("events", srEventHandler)
 	srClient.Subscribe("config", configUpdateHandler)
+	srClient.Subscribe("registry", registryUpdateHandler)
 }
 
 func connectToSr() {
@@ -202,4 +209,29 @@ func configUpdateHandler(_ string, _event interface{}) {
 	}
 
 	config.ConfigUpdate(conf)
+}
+
+func registryUpdateHandler(_ string, _event interface{}) {
+	encoded, err := json.Marshal(_event)
+	if err != nil {
+		log.WithField("error", err).Error("Can't marshal registry update event")
+		return
+	}
+	var services map[string][]service
+	err = json.Unmarshal(encoded, &services)
+	if err != nil {
+		log.WithField("error", err).Error("Can't unmarshal registry update event to []Services")
+		return
+	}
+	fileStoreServices, ok := services["fileStore"]
+	if !ok {
+		log.Warn("No fileStore services in registry")
+		return
+	}
+	if len(fileStoreServices) == 0 {
+		log.Warn("No file stores in service registry")
+		return
+	}
+	service := fileStoreServices[0]
+	settings.SetFileStoreAddress(service.Address + ":" + service.Port)
 }

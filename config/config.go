@@ -10,25 +10,26 @@ var (
 
 // Store is a small representation of store in config
 type Store struct {
-	Actions      []Action   `json:"actions,omitempty"`      // Перечень действий над объектом
-	StoreActions []Action   `json:"storeActions,omitempty"` // Перечень действий при поступлении внешних событий
-	HTTPHooks    []HTTPHook `json:"httpHooks,omitempty"`    // Http хуки (HTTP API).
-	HTTPAPI      bool       `json:"httpApi,omitempty"`      // Флаг формирования HTTP REST API для сторы
+	Type         string     `json:"type"`
+	Actions      []Action   `json:"actions,omitempty"`
+	StoreActions []Action   `json:"storeActions,omitempty"`
+	HTTPHooks    []HTTPHook `json:"httpHooks,omitempty"`
+	HTTPAPI      bool       `json:"httpApi,omitempty"`
 }
 
 // Action  is a small representation of action in config
 type Action struct {
 	ID                  string `json:"_id"`
-	ConcurentCallsLimit int    `json:"concurentCallsLimit,omitempty"` // Max concurrent calls of action
-	Multi               bool   `json:"multi"`                         // Enables action for multiple items !!!NOT IMPLEMENTED!!!
+	ConcurentCallsLimit int    `json:"concurentCallsLimit,omitempty"`
+	Multi               bool   `json:"multi"`
 	Type                string `json:"type,omitempty"`
 }
 
 // HttpHook  is a small representation of HttpHooks in config
 type HTTPHook struct {
-	URI                 string `json:"uri"`                           // URI, по которому будет доступен хук. Например, если uri=users, то хук будет http://server-address/hooks/users
-	Method              string `json:"method"`                        // HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
-	ConcurentCallsLimit int    `json:"concurentCallsLimit,omitempty"` // Max concurrent calls of http hook
+	URI                 string `json:"uri"`
+	Method              string `json:"method"`
+	ConcurentCallsLimit int    `json:"concurentCallsLimit,omitempty"`
 }
 
 // ConfigUpdate stores new config
@@ -52,6 +53,7 @@ func cloneConfig(c map[string]Store) map[string]Store {
 		s := Store{
 			HTTPAPI: store.HTTPAPI,
 		}
+		s.Type = store.Type
 		if store.Actions != nil {
 			s.Actions = make([]Action, len(store.Actions))
 			for i, a := range store.Actions {

@@ -2,6 +2,7 @@ package internet
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"strconv"
@@ -22,6 +23,7 @@ import (
 var (
 	routesBuildingCompleted bool
 	routesMutex             sync.Mutex
+	userIDNotFound          = errors.New("not found")
 )
 
 type result struct {
@@ -99,8 +101,92 @@ func onConfigUpdate(c map[string]config.Store) {
 		if len(store.StoreActions) > 0 {
 			createHTTPActions(storeName, store.StoreActions)
 		}
+
+		if store.Type == "file" || store.Type == "files" {
+			createFileHandlers(storeName)
+		}
 	}
+
 	routesBuildingCompleted = true
+}
+
+func createFileHandlers(storeName string) {
+	groupURI := "/files/" + storeName + "/"
+	group := e.Group(groupURI)
+	group.GET(":id", func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		fileID := c.Param("id")
+		t := taskq.Task{
+			Type:      taskq.DbGet,
+			UserID:    userID,
+			Store:     storeName,
+			Arguments: map[string]interface{}{"_id": fileID},
+		}
+		_, err = taskq.PushAndGetResult(t, time.Second*5)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+
+		res, err := http.Get(settings.GetFileStoreAddress() + "/" + storeName + "/" + fileID)
+		if err != nil {
+			return c.JSON(res.StatusCode, res.Status)
+		}
+		defer res.Body.Close()
+		fileName := res.Header.Get("file-name")
+		c.Response().Header().Add("Content-Disposition", `attachment; filename="`+fileName+`"`)
+		c.Response().Header().Add("Content-Type", getContentType(fileName))
+		body, _ := ioutil.ReadAll(res.Body)
+		c.Response().Write(body)
+		return nil
+	})
+
+	group.POST(":id", func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		fileID := c.Param("id")
+		fileHeader, err := c.FormFile("file")
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+		}
+		fileName := fileHeader.Filename
+		t := taskq.Task{
+			Type:      taskq.DbSet,
+			UserID:    userID,
+			Store:     storeName,
+			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID, "name": fileName}},
+		}
+		_, err = taskq.PushAndGetResult(t, time.Second*5)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+		file, err := fileHeader.Open()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		defer file.Close()
+
+		req, err := http.NewRequest(http.MethodPost, settings.GetFileStoreAddress()+"/"+storeName+"/"+fileID, file)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		req.Header.Set("file-name", fileName)
+		client := &http.Client{}
+		_, err = client.Do(req)
+		if err != nil {
+			// error handling
+		}
+		return c.JSON(http.StatusOK, nil)
+	})
+
+	group.DELETE(":id", func(c echo.Context) error {
+		return nil
+	})
+	log.Infof("Created handlers for fileStore '%s' with path %s:id", storeName, groupURI)
 }
 
 func createHTTPActions(storeName string, actions []config.Action) {
@@ -112,13 +198,9 @@ func createHTTPActions(storeName string, actions []config.Action) {
 		}
 		actionID := v.ID
 		group.GET(actionID, func(c echo.Context) error {
-			apiKey := c.QueryParam("key")
-			if apiKey == "" {
-				return c.JSON(http.StatusForbidden, "forbidden")
-			}
-			userID, err := intranet.CheckSession(apiKey)
+			userID, err := getUserID(c)
 			if err != nil {
-				return c.JSON(http.StatusForbidden, "Session not found")
+				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 			}
 
 			t := taskq.Task{
@@ -146,6 +228,14 @@ func createHTTPActions(storeName string, actions []config.Action) {
 		})
 		log.Infof("Registered httpAction for store '%s' with path %s", storeName, groupURI+v.ID)
 	}
+}
+
+func getUserID(c echo.Context) (string, error) {
+	apiKey := c.QueryParam("key")
+	if apiKey == "" {
+		return "", userIDNotFound
+	}
+	return intranet.CheckSession(apiKey)
 }
 
 func extractRequest(c echo.Context) map[string]interface{} {

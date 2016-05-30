@@ -23,7 +23,7 @@ import (
 var (
 	routesBuildingCompleted bool
 	routesMutex             sync.Mutex
-	userIDNotFound          = errors.New("not found")
+	errUserIDNotFound       = errors.New("not found")
 )
 
 type result struct {
@@ -184,7 +184,23 @@ func createFileHandlers(storeName string) {
 	})
 
 	group.DELETE(":id", func(c echo.Context) error {
-		return nil
+		userID, err := getUserID(c)
+		if err != nil {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		fileID := c.Param("id")
+		t := taskq.Task{
+			Type:      taskq.DbDelete,
+			UserID:    userID,
+			Store:     storeName,
+			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID}},
+		}
+		_, err = taskq.PushAndGetResult(t, time.Second*5)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+		// we don't delete files from file store for now
+		return c.JSON(http.StatusOK, nil)
 	})
 	log.Infof("Created handlers for fileStore '%s' with path %s:id", storeName, groupURI)
 }
@@ -233,7 +249,7 @@ func createHTTPActions(storeName string, actions []config.Action) {
 func getUserID(c echo.Context) (string, error) {
 	apiKey := c.QueryParam("key")
 	if apiKey == "" {
-		return "", userIDNotFound
+		return "", errUserIDNotFound
 	}
 	return intranet.CheckSession(apiKey)
 }

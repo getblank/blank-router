@@ -1,0 +1,166 @@
+@import (inline) "helpers/normalize.css";
+@import (inline) "react-object-inspector.css";
+@import (inline) "font-awesome.css";
+@import (inline) "vendor/nv.d3.css";
+@import "variables";
+@import "colors/patterns";
+@import "roboto";
+@import "material-icons";
+@import "helpers/animations";
+@import "helpers/vendor-prefixes";
+@import "helpers/mixins";
+@import "helpers/typography";
+@import "layouts/floating-button";
+@import "layouts/layout";
+@import "layouts/grid";
+@import "layouts/pbxOperators";
+@import "components/actions";
+@import "components/autocomplete";
+@import "components/avatar";
+@import "components/buttons";
+@import "components/color-picker";
+@import "components/comments";
+@import "components/datepicker";
+@import "components/file-upload";
+@import "components/filters";
+@import "components/forms";
+@import "components/labels";
+@import "components/lightbox";
+@import "components/list-view";
+@import "components/masked";
+@import "components/menus";
+@import "components/modals";
+@import "components/nav";
+@import "components/new-username";
+@import "components/notifications";
+@import "components/pin-toggle";
+@import "components/search-box";
+@import "components/sign-in";
+@import "components/tables";
+@import "components/tabs";
+@import "components/tooltip";
+@import "components/uploader";
+@import "components/code";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: @fs;
+}
+
+body {
+  background-color: @paperColor;
+}
+
+.home {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 300;
+}
+
+a {
+  text-decoration: none !important;
+  outline: none !important;
+  &,
+  &:visited {
+    color: @lightSecondaryText;
+  }
+}
+
+hr {
+  display: block;
+  height: 1px;
+  margin: 1em 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid @lightDivider;
+}
+
+.disable-hover {
+  pointer-events: none;
+}
+
+.relative {
+  position: relative;
+}
+
+.hidden {
+  display: none !important;
+  visibility: collapse;
+}
+
+.btn, .btn:focus {
+  outline: none;
+}
+
+.editor {
+  min-height: 400px;
+}
+
+.upper {
+  text-transform: uppercase;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.highlight {
+  background-color: #baeeba;
+}
+
+.process-counter {
+  display: inline-block;
+  position: absolute;
+  margin-left: 15px;
+  color: @baseColor;
+}
+
+.eula {
+  white-space: nowrap;
+  input[type="checkbox"] {
+    width: auto;
+  }
+  label {
+    display: inline !important;
+    margin-left: 8px;
+  }
+  a {
+    color: @accentColor;
+    margin-left: 8px;
+  }
+}
+
+.generate-margins(4);
+.generate-margins(5);
+.generate-margins(8);
+.generate-margins(14);
+.generate-margins(15);
+.generate-margins(24);
+.generate-margins(32);
+.generate-margins(40);
+.generate-margins(50);
+.generate-margins(72);
+
+.generate-margins(@k) {
+  .m-l-@{k} {
+    margin-left: (@k * 1px);
+  }
+  .m-r-@{k} {
+    margin-right: (@k * 1px);
+  }
+  .m-b-@{k} {
+    margin-bottom: (@k * 1px);
+  }
+  .m-t-@{k} {
+    margin-top: (@k * 1px);
+  }
+}

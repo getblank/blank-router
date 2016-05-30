@@ -1,0 +1,217 @@
+html, body {
+    background-color: #fafafa;
+}
+
+.pd-loader {
+    position: relative;
+    margin: 0 auto;
+    width: 100px;
+    height: 100px;
+}
+
+.pd-loader.min {
+    width: 50px;
+    height: 50px;
+}
+.pd-loader.xs {
+    width: 20px;
+    height: 20px;
+}
+
+.pd-loader.center {
+    margin-top: calc(50vh - 50px);
+}
+.pd-loader.center.min {
+    margin-top: calc(50vh - 25px);
+}
+
+.pd-loader h2 {
+    white-space: nowrap;
+    margin-left: -50%;
+    -webkit-animation: color 15s ease-in-out infinite;
+    animation: color 15s ease-in-out infinite;
+}
+
+.pd-loader .circular {
+    -webkit-animation: rotate 2s linear infinite;
+    animation: rotate 2s linear infinite;
+    height: 100px;
+    position: relative;
+    width: 100px;
+}
+
+.pd-loader.min .circular {
+    height: 50px;
+    width: 50px;
+}
+
+.pd-loader.xs .circular {
+    height: 20px;
+    width: 20px;
+}
+
+.pd-loader .circular .path {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+    -webkit-animation: dash 1.5s ease-in-out infinite, stroke-color 6s ease-in-out infinite;
+    animation: dash 1.5s ease-in-out infinite, stroke-color 6s ease-in-out infinite;
+    stroke-linecap: round;
+}
+
+@-webkit-keyframes rotate {
+    100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotate {
+    100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
+
+@-webkit-keyframes dash {
+    0% {
+        stroke-dasharray: 1, 200;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 89, 200;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 89, 200;
+        stroke-dashoffset: -124;
+    }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 200;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 89, 200;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 89, 200;
+        stroke-dashoffset: -124;
+    }
+}
+
+@-webkit-keyframes stroke-color {
+    100%, 0% {
+        stroke: #FF5722;
+    }
+    40% {
+        stroke: #9C27B0;
+    }
+    66% {
+        stroke: #2196F3;
+    }
+    80%, 90% {
+        stroke: #009688;
+    }
+}
+
+@keyframes stroke-color {
+    100%, 0% {
+        stroke: #FF5722;
+    }
+    40% {
+        stroke: #9C27B0;
+    }
+    66% {
+        stroke: #2196F3;
+    }
+    80%, 90% {
+        stroke: #009688;
+    }
+}
+
+@-webkit-keyframes color {
+    100%, 0% {
+        color: #FF5722;
+    }
+    40% {
+        color: #9C27B0;
+    }
+    66% {
+        color: #2196F3;
+    }
+    80%, 90% {
+        color: #009688;
+    }
+}
+
+@keyframes color {
+    100%, 0% {
+        color: #FF5722;
+    }
+    40% {
+        color: #9C27B0;
+    }
+    66% {
+        color: #2196F3;
+    }
+    80%, 90% {
+        color: #009688;
+    }
+}
+
+.kenzo {
+    background: linear-gradient(90deg, #fff 25%, transparent 25%), linear-gradient(315deg, #fff 10%, transparent 10%) -14px -35px, linear-gradient(45deg, #fff 20%, transparent 10%) 14px -28px, linear-gradient(225deg, #fff 10%, transparent 10%) -14px 7px, linear-gradient(135deg, #fff 10%, transparent 10%) 21px 14px, linear-gradient(225deg, #fff 10%, transparent 10%) -7px 14px, linear-gradient(225deg, #fff 10%, transparent 10%) -14px 35px, linear-gradient(315deg, #fff 20%, transparent 10%) -7px -7px, linear-gradient(135deg, #fff 10%, transparent 10%) 14px 35px, linear-gradient(45deg, #fff 10%, transparent 10%) 21px -14px, linear-gradient(135deg, #fff 10%, transparent 10%) 21px 28px;
+    background-size: 28px 42px;
+}
+
+.kenzo-back {
+    background: linear-gradient(90deg, #9C27B0 0%, #E91E63 25%, #F44336 50%, #673AB7 75%, #009688 100%);
+}
+
+.b-footer-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.b-footer {
+}
+
+.b-footer-logo {
+    display: block;
+    width: 350px;
+    height: 44px;
+    margin: 0 -30px 0 auto;
+    padding: 6px 0;
+    background: linear-gradient(225deg, #9C27B0 22px, transparent 22px), linear-gradient(315deg, #9C27B0 22px, transparent 22px);
+    background-color: #fff;
+    color: rgba(0,0,0,.87) !important;
+    text-decoration: none !important;
+    text-align: center;
+    transition: margin .2s linear;
+}
+.b-footer-logo:hover {
+    margin: 0 0 0 auto;
+}
+
+.b-logo-caption {
+    font-size: 12px;
+}
+.b-logo {
+    padding-left: 4px;
+    padding-right: 68px;
+    font-size: 36px;
+    letter-spacing: 3px;
+    font-weight: 100;
+}
+.b-content {
+    padding: 120px 0;
+    text-align: center;
+}
+.b-content h1 {
+    font-weight: 400;
+}

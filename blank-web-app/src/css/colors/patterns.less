@@ -1,0 +1,20 @@
+
+@kenzo-width: 28px;//must divide on 2 and 4
+.kenzo {
+  background: linear-gradient(90deg, #fff 25%, transparent 25%),
+    linear-gradient(315deg, #fff 10%, transparent 10%) -@kenzo-width / 2 -@kenzo-width / 4 * 5,
+    linear-gradient(45deg, #fff 20%, transparent 10%) @kenzo-width / 2 -@kenzo-width,
+    linear-gradient(225deg, #fff 10%, transparent 10%) -@kenzo-width / 2 @kenzo-width / 4,
+    linear-gradient(135deg, #fff 10%, transparent 10%) @kenzo-width / 4 * 3 @kenzo-width / 2,
+    linear-gradient(225deg, #fff 10%, transparent 10%) -@kenzo-width / 4 @kenzo-width / 2,
+    linear-gradient(225deg, #fff 10%, transparent 10%) -@kenzo-width / 2 @kenzo-width / 4 * 5,
+    linear-gradient(315deg, #fff 20%, transparent 10%) -@kenzo-width / 4 -@kenzo-width / 4,
+    linear-gradient(135deg, #fff 10%, transparent 10%) @kenzo-width / 2 @kenzo-width / 4 * 5,
+    linear-gradient(45deg, #fff 10%, transparent 10%) @kenzo-width / 4 * 3 -@kenzo-width / 2,
+    linear-gradient(135deg, #fff 10%, transparent 10%) @kenzo-width / 4 * 3 @kenzo-width;
+  background-size: @kenzo-width @kenzo-width * 1.5;
+}
+
+.kenzo-back {
+  background: linear-gradient(90deg, #9C27B0 0%, #E91E63 25%, #F44336 50%, #673AB7 75%, #009688 100%);
+}

@@ -27,15 +27,20 @@ module.exports = {
         });
     },
     searchByIds: function (entityName, ids) {
+        let query = {
+            "_id": {
+                "$in": ids,
+            },
+        };
         return new Promise(function (resolve, reject) {
-            client.call("com.stores." + entityName + ".get", function (res, error) {
+            client.call("com.stores." + entityName + ".find", function (res, error) {
                 if (typeof error === "undefined") {
-                    resolve(res);
+                    resolve(res.items || []);
                 } else {
                     alerts.error("SearchByIds: Что-то пошло не так: " + error.desc);
                     reject(error);
                 }
-            }, ids);
+            }, { "query": query, "take": ids.length });
         });
-    }
+    },
 };

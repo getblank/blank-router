@@ -212,10 +212,11 @@ var SearchBox = React.createClass({
             );
         }
         var selected = this.state.selectedOptions.map(function (option) {
-            let text = option[this.props.searchFields[0]],
-                href = "#" + configStore.findRoute(this.props.entityName) + "/" + option._id;
+            let text, href = "#" + configStore.findRoute(this.props.entityName) + "/" + option._id;
             if (this.props.selectedTemplate) {
                 text = template.render(this.props.selectedTemplate, option, true);
+            } else {
+                text = option[this.props.searchFields[0]];
             }
             return (
                 <div key={"sb-s-" + option._id} className="selected">

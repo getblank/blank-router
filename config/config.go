@@ -10,11 +10,12 @@ var (
 
 // Store is a small representation of store in config
 type Store struct {
-	Type         string     `json:"type"`
-	Actions      []Action   `json:"actions,omitempty"`
-	StoreActions []Action   `json:"storeActions,omitempty"`
-	HTTPHooks    []HTTPHook `json:"httpHooks,omitempty"`
-	HTTPAPI      bool       `json:"httpApi,omitempty"`
+	Type           string     `json:"type"`
+	Actions        []Action   `json:"actions,omitempty"`
+	StoreActions   []Action   `json:"storeActions,omitempty"`
+	HTTPHooks      []HTTPHook `json:"httpHooks,omitempty"`
+	HTTPAPI        bool       `json:"httpApi,omitempty"`
+	StoreLifeCycle Hooks      `json:"storeLifeCycle,omitempty"`
 }
 
 // Action  is a small representation of action in config
@@ -25,15 +26,27 @@ type Action struct {
 	Type                string `json:"type,omitempty"`
 }
 
-// HttpHook  is a small representation of HttpHooks in config
+// HTTPHook  is a small representation of HttpHooks in config
 type HTTPHook struct {
 	URI                 string `json:"uri"`
 	Method              string `json:"method"`
 	ConcurentCallsLimit int    `json:"concurentCallsLimit,omitempty"`
 }
 
-// ConfigUpdate stores new config
-func ConfigUpdate(c map[string]Store) {
+// Hooks holds JavaScript code of hooks
+type Hooks struct {
+	WillCreate string `json:"willCreate,omitempty"`
+	DidCreate  string `json:"didCreate,omitempty"`
+	WillSave   string `json:"willSave,omitempty"`
+	DidSave    string `json:"didSave,omitempty"`
+	WillRemove string `json:"willRemove,omitempty"`
+	DidRemove  string `json:"didRemove,omitempty"`
+	DidRead    string `json:"didRead,omitempty"`
+	DidStart   string `json:"didStart,omitempty"`
+}
+
+// Update stores new config
+func Update(c map[string]Store) {
 	locker.Lock()
 	defer locker.Unlock()
 	conf = cloneConfig(c)

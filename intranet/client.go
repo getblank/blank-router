@@ -196,11 +196,14 @@ func configUpdateHandler(_ string, _event interface{}) {
 		log.WithError(err).Error("Can't unmarshal arrived config")
 	}
 
-	for store := range conf {
+	for storeName, storeDesc := range conf {
+		if storeDesc.StoreLifeCycle.DidStart == "" {
+			continue
+		}
 		t := taskq.Task{
 			Type:   taskq.StoreLifeCycle,
 			UserID: "system",
-			Store:  store,
+			Store:  storeName,
 			Arguments: map[string]interface{}{
 				"event": "didStart",
 			},
@@ -208,7 +211,7 @@ func configUpdateHandler(_ string, _event interface{}) {
 		taskq.Push(t)
 	}
 
-	config.ConfigUpdate(conf)
+	config.Update(conf)
 }
 
 func registryUpdateHandler(_ string, _event interface{}) {

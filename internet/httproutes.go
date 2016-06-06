@@ -260,9 +260,11 @@ func extractRequest(c echo.Context) map[string]interface{} {
 	for _, p := range c.ParamNames() {
 		params[p] = c.Param(p)
 	}
+	headerKeys := c.Request().Header()
+	reqHeader := c.Request().Header()
 	header := map[string]string{}
-	for _, k := range c.Request().Header().Keys() {
-		header[k] = c.Request().Header().Get(k)
+	for _, k := range headerKeys.Keys() {
+		header[k] = reqHeader.Get(k)
 	}
 	return map[string]interface{}{
 		"params":  params,

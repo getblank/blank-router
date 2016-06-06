@@ -27,10 +27,11 @@ var (
 )
 
 type result struct {
-	Type    string      `json:"type"`
-	Data    string      `json:"data"`
-	RAWData interface{} `json:"rawData"`
-	Code    int         `json:"code"`
+	Type    string            `json:"type"`
+	Data    string            `json:"data"`
+	RAWData interface{}       `json:"rawData"`
+	Code    int               `json:"code"`
+	Header  map[string]string `json:"header"`
 }
 
 func onConfigUpdate(c map[string]config.Store) {
@@ -300,6 +301,9 @@ func defaultResponse(res *result, c echo.Context) error {
 	code := res.Code
 	if code == 0 {
 		code = http.StatusOK
+	}
+	for k, v := range res.Header {
+		c.Response().Header().Set(k, v)
 	}
 	switch res.Type {
 	case "JSON", "json":

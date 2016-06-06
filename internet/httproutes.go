@@ -259,12 +259,17 @@ func extractRequest(c echo.Context) map[string]interface{} {
 	for _, p := range c.ParamNames() {
 		params[p] = c.Param(p)
 	}
+	header := map[string]string{}
+	for _, k := range c.Request().Header().Keys() {
+		header[k] = c.Request().Header().Get(k)
+	}
 	return map[string]interface{}{
 		"params":  params,
 		"query":   c.QueryParams(),
 		"form":    c.FormParams(),
 		"ip":      extractIP(c),
 		"referer": c.Request().Referer(),
+		"header":  header,
 	}
 }
 

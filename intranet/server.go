@@ -113,7 +113,7 @@ func cronRunHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 }
 
 func internalOpenCallback(c *wango.Conn) {
-	println("Connected client", c.ID())
+	log.Info("Connected client", c.ID())
 }
 
 func internalCloseCallback(c *wango.Conn) {

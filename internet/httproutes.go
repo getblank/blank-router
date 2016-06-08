@@ -1,6 +1,8 @@
 package internet
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
 	"net"
@@ -27,11 +29,12 @@ var (
 )
 
 type result struct {
-	Type    string            `json:"type"`
-	Data    string            `json:"data"`
-	RAWData interface{}       `json:"rawData"`
-	Code    int               `json:"code"`
-	Header  map[string]string `json:"header"`
+	Type     string            `json:"type"`
+	Data     string            `json:"data"`
+	RAWData  interface{}       `json:"rawData"`
+	Code     int               `json:"code"`
+	Header   map[string]string `json:"header"`
+	FileName string            `json:"fileName"`
 }
 
 func onConfigUpdate(c map[string]config.Store) {
@@ -319,7 +322,11 @@ func defaultResponse(res *result, c echo.Context) error {
 	case "XML", "xml":
 		return c.XMLBlob(code, []byte(res.Data))
 	case "file":
-		return c.File(res.Data)
+		buffer, err := base64.StdEncoding.DecodeString(res.Data)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, "can't decode file")
+		}
+		return c.Attachment(bytes.NewReader(buffer), res.FileName)
 	default:
 		return c.JSON(http.StatusSeeOther, "unknown encoding type")
 	}

@@ -7,15 +7,15 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/engine/standard"
+	"github.com/labstack/echo/middleware"
 	"golang.org/x/net/websocket"
 
 	"github.com/getblank/blank-router/config"
 	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
 	"github.com/getblank/blank-router/taskq"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
-	"github.com/labstack/echo/middleware"
 )
 
 var (
@@ -26,30 +26,17 @@ var (
 func init() {
 	log.Info("Init internet server on port ", port)
 	e.Use(middleware.Gzip())
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
 	e.Use(staticFromAssets("/static"))
+
+	e.GET("/*", assetsHandler)
 
 	wamp := wampInit()
 	e.GET("/wamp", standard.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
 		wamp.WampHandler(ws, nil)
 	})))
-
-	e.GET("/", func(c echo.Context) error {
-		content, err := Asset("src/html/index.html")
-		if err != nil {
-			return c.HTML(http.StatusNotFound, "file not found")
-		}
-		return c.HTML(http.StatusOK, string(content))
-	})
-	e.GET("/app.css", func(c echo.Context) error {
-		return c.File("static/css/app.css")
-	})
-	e.GET("/assets/*", assetsHandler)
-
-	e.Static("/fonts", "static/fonts")
-	e.Static("/css", "static/css")
-	e.Static("/js", "static/js")
 
 	e.GET("/common-settings", commonSettingsHandler)
 
@@ -68,10 +55,10 @@ func staticFromAssets(root string) echo.MiddlewareFunc {
 			p := c.Request().URL().Path()
 			file := path.Clean(p)
 			switch {
-			case strings.HasPrefix(file, "/js"):
-				file = strings.TrimPrefix(file, "/js")
-				c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJavaScript)
-				content, err := Asset("release" + file)
+			case strings.HasPrefix(file, "/fonts"):
+				c.Response().Header().Set(echo.HeaderContentType, getContentType(file))
+				content, err := Asset("src" + file)
+				log.Info("FONT: ", file)
 				if err != nil {
 					c.Response().WriteHeader(http.StatusNotFound)
 					return err
@@ -79,16 +66,6 @@ func staticFromAssets(root string) echo.MiddlewareFunc {
 				c.Response().WriteHeader(http.StatusOK)
 				c.Response().Write(content)
 				return nil
-			case strings.HasPrefix(file, "/fonts"):
-				c.Response().Header().Set(echo.HeaderContentType, echo.MIMEOctetStream)
-				content, err := Asset("src" + file)
-				if err != nil {
-					c.Response().WriteHeader(http.StatusNotFound)
-					return err
-				}
-				c.Response().WriteHeader(http.StatusOK)
-				c.Response().Write(content)
-
 			}
 			return next(c)
 		}
@@ -117,8 +94,13 @@ func commonSettingsHandler(c echo.Context) error {
 }
 
 func assetsHandler(c echo.Context) error {
-	res, err := http.Get(settings.SRHTTPAddress + c.Request().URI())
+	var uri = "/assets/blank" + strings.Split(c.Request().URI(), "?")[0]
+	if uri == "/assets/blank/" {
+		uri = "/assets/blank/index.html"
+	}
+	res, err := http.Get(settings.SRHTTPAddress + uri)
 	if err != nil {
+		c.Response().WriteHeader(http.StatusNotFound)
 		return err
 	}
 	buf := bytes.NewBuffer(nil)
@@ -126,9 +108,10 @@ func assetsHandler(c echo.Context) error {
 	if err != nil {
 		log.WithError(err).Error("Can't read from SR responsed file")
 	}
-
-	c.Response().Header().Add("Content-Type", getContentType(c.Request().URI()))
-	_, err = c.Response().Write(buf.Bytes())
+	c.Response().Header().Set(echo.HeaderContentType, getContentType(uri))
+	c.Response().WriteHeader(res.StatusCode)
+	content := buf.Bytes()
+	_, err = c.Response().Write(content)
 	return err
 }
 

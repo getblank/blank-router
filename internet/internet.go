@@ -1,7 +1,7 @@
 package internet
 
 import (
-	"bytes"
+	"io"
 	"net/http"
 	"path"
 	"strings"
@@ -26,10 +26,8 @@ var (
 func init() {
 	log.Info("Init internet server on port ", port)
 	e.Use(middleware.Gzip())
-	// e.Use(middleware.Logger())
+	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
-	e.Use(staticFromAssets("/static"))
 
 	e.GET("/*", assetsHandler)
 
@@ -47,29 +45,6 @@ func init() {
 	})
 
 	go e.Run(standard.New(":" + port))
-}
-
-func staticFromAssets(root string) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			p := c.Request().URL().Path()
-			file := path.Clean(p)
-			switch {
-			case strings.HasPrefix(file, "/fonts"):
-				c.Response().Header().Set(echo.HeaderContentType, getContentType(file))
-				content, err := Asset("src" + file)
-				log.Info("FONT: ", file)
-				if err != nil {
-					c.Response().WriteHeader(http.StatusNotFound)
-					return err
-				}
-				c.Response().WriteHeader(http.StatusOK)
-				c.Response().Write(content)
-				return nil
-			}
-			return next(c)
-		}
-	}
 }
 
 func commonSettingsHandler(c echo.Context) error {
@@ -103,15 +78,10 @@ func assetsHandler(c echo.Context) error {
 		c.Response().WriteHeader(http.StatusNotFound)
 		return err
 	}
-	buf := bytes.NewBuffer(nil)
-	_, err = buf.ReadFrom(res.Body)
-	if err != nil {
-		log.WithError(err).Error("Can't read from SR responsed file")
-	}
+	defer res.Body.Close()
 	c.Response().Header().Set(echo.HeaderContentType, getContentType(uri))
 	c.Response().WriteHeader(res.StatusCode)
-	content := buf.Bytes()
-	_, err = c.Response().Write(content)
+	n, err := io.Copy(c.Response(), res.Body)
 	return err
 }
 

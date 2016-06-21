@@ -1,7 +1,5 @@
 package main
 
-//go:generate $GOPATH/bin/go-bindata -pkg internet -o internet/assets.go -prefix "blank-web-app/" blank-web-app/src/fonts/
-
 import (
 	"os"
 	"strings"

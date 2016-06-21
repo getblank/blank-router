@@ -81,7 +81,7 @@ func assetsHandler(c echo.Context) error {
 	defer res.Body.Close()
 	c.Response().Header().Set(echo.HeaderContentType, getContentType(uri))
 	c.Response().WriteHeader(res.StatusCode)
-	n, err := io.Copy(c.Response(), res.Body)
+	_, err := io.Copy(c.Response(), res.Body)
 	return err
 }
 

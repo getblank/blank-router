@@ -60,7 +60,20 @@ func sessionOpenCallback(c *wango.Conn) {
 }
 
 func sessionCloseCallback(c *wango.Conn) {
-	// intranet.
+	extra := c.GetExtra()
+	if extra == nil {
+		return
+	}
+	cred, ok := extra.(credentials)
+	if !ok {
+		log.WithField("extra", extra).Warn("Invalid type of extra on session close")
+		return
+	}
+	log.WithFields(log.Fields{"connId": c.ID(), "apiKey": cred.apiKey, "userId": cred.userID}).Info("User disconnected")
+	err := intranet.DeleteConnection(cred.apiKey, c.ID())
+	if err != nil {
+		log.WithError(err).Error("Can't delete connection when session closed")
+	}
 }
 
 func anyHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -169,15 +182,13 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 			"password": args[1],
 		},
 	}
-	resChan := taskq.Push(t)
-
-	res := <-resChan
-	if res.Err != "" {
-		return nil, errors.New(res.Err)
+	res, err := taskq.PushAndGetResult(t, 0)
+	if err != nil {
+		return nil, err
 	}
-	user, ok := res.Result.(map[string]interface{})
+	user, ok := res.(map[string]interface{})
 	if !ok {
-		log.WithField("result", res.Result).Warn("Invalid type of result on authentication")
+		log.WithField("result", res).Warn("Invalid type of result on authentication")
 		return nil, berrors.ErrError
 	}
 	userID, ok := user["_id"].(string)
@@ -186,7 +197,7 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		return nil, berrors.ErrError
 	}
 
-	apiKey, err := intranet.NewSession(userID)
+	apiKey, err := intranet.NewSession(userID, user)
 	if err != nil {
 		return nil, err
 	}

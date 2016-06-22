@@ -58,8 +58,8 @@ func DeleteSession(apiKey string) error {
 }
 
 // NewSession creates a new session in serviceRegistry
-func NewSession(userID string) (string, error) {
-	res, err := call(uriNewSession, userID)
+func NewSession(userID string, user interface{}) (string, error) {
+	res, err := call(uriNewSession, userID, user)
 	if err != nil {
 		return "", err
 	}
@@ -79,8 +79,8 @@ func AddSubscription(apiKey, connID, uri string, extra interface{}) error {
 }
 
 // DeleteConnection sends delete connection event to sessions store
-func DeleteConnection(apiKey, uri string) error {
-	_, err := call(uriUnsubscribed, apiKey, uri)
+func DeleteConnection(apiKey, connID string) error {
+	_, err := call(uriDeleteConnection, apiKey, connID)
 	return err
 }
 

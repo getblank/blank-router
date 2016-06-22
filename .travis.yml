@@ -1,7 +1,6 @@
 language: go
 os:
   - linux
-  - osx
 go:
   - 1.6.2
 before_install:
@@ -19,3 +18,6 @@ script: go get -t -v ./...
 after_success:
   - curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-$TRAVIS_OS_NAME/blank-router
   - curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$TRAVIS_OS_NAME/blank-router
+  - GOOS=darwin GOARCH=amd64 go build
+  - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-osx/blank-router
+  - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/osx/blank-router

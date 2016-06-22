@@ -38,6 +38,7 @@ type result struct {
 }
 
 func onConfigUpdate(c map[string]config.Store) {
+	w.Disconnect()
 	if routesBuildingCompleted {
 		log.Warn("Routes already built. Need to restart if http hooks or actions modified.")
 	}

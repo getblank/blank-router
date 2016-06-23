@@ -313,11 +313,10 @@ func defaultResponse(res *result, c echo.Context) error {
 	}
 	switch res.Type {
 	case "JSON", "json":
-		response := res.RAWData
-		if response == nil {
-			response = res.Data
+		if res.RAWData == nil {
+			return c.JSONBlob(code, []byte(res.Data))
 		}
-		return c.JSON(code, response)
+		return c.JSON(code, res.RAWData)
 	case "HTML", "html":
 		return c.HTML(code, res.Data)
 	case "XML", "xml":

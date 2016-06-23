@@ -61,8 +61,7 @@ type Task struct {
 
 // Done must be called when task is done
 func Done(r Result) {
-	log.WithFields(log.Fields{"id": r.ID}).Debug("Task is done")
-
+	log.WithFields(log.Fields{"id": r.ID, "error": r.Err}).Debug("Task is done")
 	resultLocker.Lock()
 	ch, ok := resultChans[r.ID]
 	delete(resultChans, r.ID)
@@ -82,6 +81,7 @@ func Push(t Task) chan Result {
 	resultChans[t.ID] = ch
 	resultLocker.Unlock()
 	mainQueue <- t
+	log.WithFields(log.Fields{"id": t.ID}).Debug("New task pushed")
 	return ch
 }
 
@@ -116,14 +116,17 @@ func PushAndGetResult(t Task, timeout time.Duration) (interface{}, error) {
 // Shift returns task from the queue
 func Shift() Task {
 	t := <-shiftQueue
+	log.WithFields(log.Fields{"id": t.ID}).Debug("Put task from queue")
 	return t
 }
 
 // UnShift returns task to the queue
 func UnShift(t Task) {
+	log.WithFields(log.Fields{"id": t.ID}).Debug("Return task to the queue")
 	if t.rotten != nil && *(t.rotten) {
 		return
 	}
+	log.WithFields(log.Fields{"id": t.ID}).Debug("Task returned to the queue")
 	extraQueue <- t
 }
 

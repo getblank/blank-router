@@ -12,8 +12,16 @@ import (
 	"github.com/getblank/blank-router/settings"
 )
 
+var (
+	buildTime string
+	gitHash   string
+	version   = "0.0.9"
+)
+
 func main() {
-	// log.SetFormatter(&log.JSONFormatter{})
+	if os.Getenv("BLANK_DEBUG") != "" {
+		log.SetLevel(log.DebugLevel)
+	}
 	var srAddress *string
 	var devMode *bool
 

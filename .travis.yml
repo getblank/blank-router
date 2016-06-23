@@ -14,10 +14,13 @@ before_install:
   - go get -u github.com/labstack/echo/engine/standard
   - go get -u github.com/labstack/echo/middleware
   - go get -u github.com/spf13/cobra
-script: go get -t -v ./...
+script:
+  - go get -t -v ./...
 after_success:
-  - curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-$TRAVIS_OS_NAME/blank-router
-  - curl --ftp-create-dirs --data-binary -k -T $HOME/gopath/bin/blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$TRAVIS_OS_NAME/blank-router
-  - GOOS=darwin GOARCH=amd64 go build
+  - go build -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
+  - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-linux/blank-router
+  - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/linux/blank-router
+
+  - GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
   - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-osx/blank-router
   - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/osx/blank-router

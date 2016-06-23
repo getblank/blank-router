@@ -49,9 +49,9 @@ type Hooks struct {
 func Update(c map[string]Store) {
 	locker.Lock()
 	defer locker.Unlock()
-	conf = cloneConfig(c)
+	conf = clone(c)
 	if onUpdateHandler != nil {
-		onUpdateHandler(cloneConfig(c))
+		onUpdateHandler(clone(c))
 	}
 }
 
@@ -60,7 +60,8 @@ func OnUpdate(fn func(map[string]Store)) {
 	onUpdateHandler = fn
 }
 
-func cloneConfig(c map[string]Store) map[string]Store {
+// Deep config cloner
+func clone(c map[string]Store) map[string]Store {
 	var res = map[string]Store{}
 	for storeName, store := range c {
 		s := Store{

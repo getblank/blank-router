@@ -27,7 +27,7 @@ var (
 func Init() {
 	log.Info("Init internet server on port ", port)
 	e.Use(middleware.Gzip())
-	e.Use(middleware.Logger())
+	e.Use(logger())
 	e.Use(middleware.Recover())
 
 	e.GET("/*", assetsHandler)
@@ -70,8 +70,8 @@ func commonSettingsHandler(c echo.Context) error {
 }
 
 func assetsHandler(c echo.Context) error {
-	var uri = "/assets/blank" + strings.Split(c.Request().URI(), "?")[0]
-	if uri == "/assets/blank/" {
+	var uri = "/assets" + strings.Split(c.Request().URI(), "?")[0]
+	if uri == "/assets/" {
 		uri = "/assets/blank/index.html"
 	}
 	res, err := http.Get(settings.SRHTTPAddress + uri)

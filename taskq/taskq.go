@@ -81,7 +81,7 @@ func Push(t Task) chan Result {
 	resultChans[t.ID] = ch
 	resultLocker.Unlock()
 	mainQueue <- t
-	log.WithFields(log.Fields{"id": t.ID}).Debug("New task pushed")
+	log.WithFields(log.Fields{"id": t.ID, "type": t.Type, "store": t.Store, "userId": t.UserID}).Debug("New task pushed")
 	return ch
 }
 

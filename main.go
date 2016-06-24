@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	log "github.com/Sirupsen/logrus"
-	_ "github.com/getblank/blank-router/internet"
+	"github.com/getblank/blank-router/internet"
 	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
 )
@@ -39,6 +39,7 @@ func main() {
 			log.Info("Router started")
 			settings.SRAddress = *srAddress
 			settings.SRHTTPAddress = "http:" + strings.TrimPrefix(*srAddress, "ws:")
+			go internet.Init()
 			intranet.Init()
 		},
 	}

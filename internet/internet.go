@@ -23,7 +23,8 @@ var (
 	e    = echo.New()
 )
 
-func init() {
+// Init starts internet http server
+func Init() {
 	log.Info("Init internet server on port ", port)
 	e.Use(middleware.Gzip())
 	e.Use(middleware.Logger())

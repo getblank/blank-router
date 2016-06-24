@@ -141,7 +141,9 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		if !ok {
 			return nil, berrors.ErrInvalidArguments
 		}
+		log.WithField("apiKey", apiKey).WithField("rpc", "signIn").Debug("Will check for session")
 		userID, err := intranet.CheckSession(apiKey)
+		log.WithField("userId", userID).WithError(err).WithField("rpc", "signIn").Debug("Check session response")
 		if err != nil {
 			return nil, err
 		}
@@ -153,16 +155,13 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 				"_id": userID,
 			},
 		}
-		resChan := taskq.Push(t)
-
-		res := <-resChan
-
-		if res.Err != "" {
-			return nil, errors.New(res.Err)
+		res, err := taskq.PushAndGetResult(t, 0)
+		if err != nil {
+			return nil, err
 		}
-		user, ok := res.Result.(map[string]interface{})
+		user, ok := res.(map[string]interface{})
 		if !ok {
-			log.WithField("result", res.Result).Warn("Invalid type of task result")
+			log.WithField("result", res).Warn("Invalid type of task result")
 			return nil, berrors.ErrError
 		}
 

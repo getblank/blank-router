@@ -40,6 +40,7 @@ func wampInit() *wango.Wango {
 	w.SetSessionCloseCallback(sessionCloseCallback)
 
 	w.RegisterRPCHandler(uriSignIn, signInHandler)
+	w.RegisterRPCHandler(uriSignOut, signOutHandler)
 	w.RegisterRPCHandler(uriState, stateHandler)
 	w.RegisterRPCHandler(uriAction, actionHandler)
 	w.RegisterRPCHandler(rgxRPC.Regexp, rgxRpcHandler)

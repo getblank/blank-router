@@ -2,7 +2,6 @@ package internet
 
 import (
 	"errors"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -43,11 +42,6 @@ func subConfigHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 	if res.Err != "" {
 		return nil, errors.New(res.Err)
 	}
-
-	go func() {
-		time.Sleep(time.Millisecond)
-		w.Publish(uriSubConfig, res.Result)
-	}()
 
 	return res.Result, nil
 }

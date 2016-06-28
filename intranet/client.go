@@ -97,11 +97,12 @@ func OnEvent(fn func(string, interface{}, []string)) {
 
 func call(uri string, args ...interface{}) (interface{}, error) {
 	srLocker.RLock()
-	defer srLocker.RUnlock()
-	if srClient == nil {
+	w := srClient
+	srLocker.RUnlock()
+	if w == nil {
 		return nil, berrors.ErrNotConnected
 	}
-	return srClient.Call(uri, args...)
+	return w.Call(uri, args...)
 }
 
 func connectedToSR(w *wango.Wango) {

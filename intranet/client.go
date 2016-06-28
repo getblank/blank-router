@@ -119,7 +119,7 @@ func connectedToSR(w *wango.Wango) {
 func connectToSr() {
 	reconnectChan := make(chan struct{})
 	for {
-		log.Info("Attempt to connect to SR: ", settings.SRAddress)
+		log.Infof("Attempt to connect to SR: %s", settings.SRAddress)
 		client, err := wango.Connect(settings.SRAddress, "http://127.0.0.1:1234")
 		if err != nil {
 			log.Warn("Can'c connect to service registry: " + err.Error())
@@ -127,6 +127,7 @@ func connectToSr() {
 			continue
 		}
 		client.SetSessionCloseCallback(func(c *wango.Conn) {
+			log.Warnf("Disconnected from SR: %s", settings.SRAddress)
 			srLocker.Lock()
 			srClient = nil
 			srLocker.Unlock()

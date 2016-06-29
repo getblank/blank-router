@@ -11,7 +11,6 @@ import (
 	"github.com/getblank/blank-router/berrors"
 	"github.com/getblank/blank-router/config"
 	"github.com/getblank/blank-router/settings"
-	"github.com/getblank/blank-router/taskq"
 )
 
 var (
@@ -196,21 +195,6 @@ func configUpdateHandler(_ string, _event interface{}) {
 	err = json.Unmarshal(encoded, &conf)
 	if err != nil {
 		log.WithError(err).Error("Can't unmarshal arrived config")
-	}
-
-	for storeName, storeDesc := range conf {
-		if storeDesc.StoreLifeCycle.DidStart == "" {
-			continue
-		}
-		t := taskq.Task{
-			Type:   taskq.StoreLifeCycle,
-			UserID: "system",
-			Store:  storeName,
-			Arguments: map[string]interface{}{
-				"event": "didStart",
-			},
-		}
-		taskq.Push(t)
 	}
 
 	config.Update(conf)

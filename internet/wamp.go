@@ -103,7 +103,7 @@ func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	if !ok {
 		return nil, berrors.ErrInvalidArguments
 	}
-	actionId, ok := args[1].(string)
+	actionID, ok := args[1].(string)
 	if !ok {
 		return nil, berrors.ErrInvalidArguments
 	}
@@ -113,7 +113,7 @@ func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		UserID: userID,
 		Arguments: map[string]interface{}{
 			"itemId":   args[2],
-			"actionId": actionId,
+			"actionId": actionID,
 		},
 	}
 	if len(args) > 3 {

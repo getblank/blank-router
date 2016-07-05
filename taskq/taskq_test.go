@@ -20,7 +20,6 @@ func TestPushing(t *testing.T) {
 			g.Assert(err).Equal(errTimeout)
 			dur := time.Now().Sub(now)
 			g.Assert(time.Second <= dur && dur < time.Millisecond*1100).IsTrue()
-			Shift()
 		})
 		g.It("should not unshift task to the queue when timeout reached", func() {
 			t := Task{

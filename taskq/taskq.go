@@ -114,8 +114,14 @@ func PushAndGetResult(t Task, timeout time.Duration) (interface{}, error) {
 }
 
 // Shift returns task from the queue
-func Shift() Task {
-	t := <-shiftQueue
+func Shift() (t Task) {
+	for {
+		t = <-shiftQueue
+		if t.rotten != nil && *(t.rotten) {
+			continue
+		}
+		break
+	}
 	log.WithFields(log.Fields{"id": t.ID}).Debug("Put task from queue")
 	return t
 }

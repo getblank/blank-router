@@ -81,7 +81,7 @@ func Push(t Task) chan Result {
 	resultChans[t.ID] = ch
 	resultLocker.Unlock()
 	mainQueue <- t
-	log.Debugf("New task pushed. id: %s, type: %s, store: %s, userId: %s", t.ID, t.Type, t.Store, t.UserID)
+	log.Debugf("New task pushed. id: %d, type: %s, store: %s, userId: %s", t.ID, t.Type, t.Store, t.UserID)
 	return ch
 }
 
@@ -122,17 +122,17 @@ func Shift() (t Task) {
 		}
 		break
 	}
-	log.Debugf("Put task from queue. id: %s", t.ID)
+	log.Debugf("Put task from queue. id: %d", t.ID)
 	return t
 }
 
 // UnShift returns task to the queue
 func UnShift(t Task) {
-	log.Debugf("Return task to the queue. id: %s", t.ID)
+	log.Debugf("Return task to the queue. id: %d", t.ID)
 	if t.rotten != nil && *(t.rotten) {
 		return
 	}
-	log.Debugf("Task returned to the queue. id: %s", t.ID)
+	log.Debugf("Task returned to the queue. id: %d", t.ID)
 	extraQueue <- t
 }
 

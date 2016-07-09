@@ -50,7 +50,7 @@ func taskDoneHandler(c *wango.Conn, uri string, args ...interface{}) (interface{
 	}
 
 	result := taskq.Result{
-		ID:     int(id),
+		ID:     uint64(id),
 		Result: args[1],
 	}
 	taskq.Done(result)
@@ -73,7 +73,7 @@ func taskErrorHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		return nil, berrors.ErrInvalidArguments
 	}
 	result := taskq.Result{
-		ID:  int(id),
+		ID:  uint64(id),
 		Err: err,
 	}
 	taskq.Done(result)

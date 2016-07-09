@@ -2,6 +2,7 @@ package taskq
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -33,25 +34,24 @@ var (
 	extraQueue chan Task
 	shiftQueue chan Task
 
-	resultChans  map[int]chan Result
+	resultChans  map[uint64]chan Result
 	resultLocker sync.Mutex
 
-	sequence       int
-	sequenceLocker sync.Mutex
+	sequence uint64
 
 	errTimeout = errors.New("Timeout")
 )
 
 // Result is a struct for result of task
 type Result struct {
-	ID     int
+	ID     uint64
 	Result interface{}
 	Err    string
 }
 
 // Task represents task for workers
 type Task struct {
-	ID        int                    `json:"id"`
+	ID        uint64                 `json:"id"`
 	UserID    string                 `json:"userId"`
 	Store     string                 `json:"store"`
 	Type      string                 `json:"type"`
@@ -67,7 +67,7 @@ func Done(r Result) {
 	delete(resultChans, r.ID)
 	resultLocker.Unlock()
 	if !ok {
-		log.WithField("id", r.ID).Warn("Result channel was not found")
+		log.Warnf("Result channel was not found for id: %d", r.ID)
 		return
 	}
 	ch <- r
@@ -81,7 +81,7 @@ func Push(t Task) chan Result {
 	resultChans[t.ID] = ch
 	resultLocker.Unlock()
 	mainQueue <- t
-	log.WithFields(log.Fields{"id": t.ID, "type": t.Type, "store": t.Store, "userId": t.UserID}).Debug("New task pushed")
+	log.Debugf("New task pushed. id: %s, type: %s, store: %s, userId: %s", t.ID, t.Type, t.Store, t.UserID)
 	return ch
 }
 
@@ -122,25 +122,22 @@ func Shift() (t Task) {
 		}
 		break
 	}
-	log.WithFields(log.Fields{"id": t.ID}).Debug("Put task from queue")
+	log.Debugf("Put task from queue. id: %s", t.ID)
 	return t
 }
 
 // UnShift returns task to the queue
 func UnShift(t Task) {
-	log.WithFields(log.Fields{"id": t.ID}).Debug("Return task to the queue")
+	log.Debugf("Return task to the queue. id: %s", t.ID)
 	if t.rotten != nil && *(t.rotten) {
 		return
 	}
-	log.WithFields(log.Fields{"id": t.ID}).Debug("Task returned to the queue")
+	log.Debugf("Task returned to the queue. id: %s", t.ID)
 	extraQueue <- t
 }
 
-func nextID() int {
-	sequenceLocker.Lock()
-	sequence++
-	sequenceLocker.Unlock()
-	return sequence
+func nextID() uint64 {
+	return atomic.AddUint64(&sequence, 1)
 }
 
 func queuing() {
@@ -165,7 +162,7 @@ func init() {
 	mainQueue = make(chan Task, mainQueueLength)
 	extraQueue = make(chan Task, extraQueueLength)
 	shiftQueue = make(chan Task)
-	resultChans = make(map[int]chan Result)
+	resultChans = make(map[uint64]chan Result)
 
 	go queuing()
 }

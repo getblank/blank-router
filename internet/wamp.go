@@ -84,7 +84,7 @@ func anyHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, er
 }
 
 func timeHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
-	return time.Now().Format(time.RFC3339), nil
+	return time.Now().Format(time.RFC3339Nano), nil
 }
 
 func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {

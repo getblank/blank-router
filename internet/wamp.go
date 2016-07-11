@@ -22,6 +22,7 @@ const (
 
 	uriState  = "com.state"
 	uriAction = "com.action"
+	uriTime   = "com.time"
 
 	uriSubConfig = "com.config"
 	uriSubStores = "com.stores"
@@ -51,6 +52,7 @@ func wampInit() *wango.Wango {
 
 	w.RegisterSubHandler(uriSubUser, subUserHandler, nil, nil)
 	w.RegisterSubHandler(uriSubConfig, subConfigHandler, nil, nil)
+	w.RegisterRPCHandler(uriTime, timeHandler)
 	w.RegisterSubHandler(uriSubStores, subStoresHandler, unsubStoresHandler, nil)
 
 	return w
@@ -79,6 +81,10 @@ func sessionCloseCallback(c *wango.Conn) {
 
 func anyHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
 	return "8===>", nil
+}
+
+func timeHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	return time.Now().Format(time.RFC3339), nil
 }
 
 func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {

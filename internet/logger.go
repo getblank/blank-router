@@ -11,7 +11,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-func logger() echo.MiddlewareFunc {
+func loggerMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if !settings.DevMode {

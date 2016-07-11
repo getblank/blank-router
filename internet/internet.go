@@ -27,7 +27,7 @@ var (
 func Init() {
 	log.Info("Init internet server on port ", port)
 	e.Use(middleware.Gzip())
-	e.Use(logger())
+	e.Use(loggerMiddleware())
 	e.Use(middleware.Recover())
 
 	e.GET("/*", assetsHandler)

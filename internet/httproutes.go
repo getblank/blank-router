@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -270,6 +271,16 @@ func extractRequest(c echo.Context) map[string]interface{} {
 	for _, k := range headerKeys.Keys() {
 		header[k] = reqHeader.Get(k)
 	}
+	var body interface{}
+	if rtype := c.Request().Header().Get("Content-Type"); strings.HasPrefix(rtype, "application/json") || strings.HasPrefix(rtype, "text/plain") {
+		_body := make([]byte, c.Request().ContentLength())
+		_, err := c.Request().Body().Read(_body)
+		if err != nil && err != io.EOF {
+			log.Errorf("Can't read request http body for application/json. Error: %v", err)
+		} else {
+			body = string(_body)
+		}
+	}
 	return map[string]interface{}{
 		"params":  params,
 		"query":   c.QueryParams(),
@@ -277,6 +288,7 @@ func extractRequest(c echo.Context) map[string]interface{} {
 		"ip":      extractIP(c),
 		"referer": c.Request().Referer(),
 		"header":  header,
+		"body":    body,
 	}
 }
 

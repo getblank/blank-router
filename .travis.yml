@@ -4,6 +4,7 @@ os:
 go:
   - 1.6.2
 before_install:
+  - sudo apt-get install -qq upx
   - go get -u golang.org/x/net/websocket
   - go get -u github.com/pkg/errors
   - go get -u github.com/getblank/uuid
@@ -18,6 +19,7 @@ script:
   - go get -t -v ./...
 after_success:
   - go build -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
+  - upx --best blank-router
   - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-linux/blank-router
   - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/linux/blank-router
 

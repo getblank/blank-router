@@ -273,12 +273,12 @@ func extractRequest(c echo.Context) map[string]interface{} {
 	}
 	var body interface{}
 	if rtype := c.Request().Header().Get("Content-Type"); strings.HasPrefix(rtype, "application/json") || strings.HasPrefix(rtype, "text/plain") {
-		_body := make([]byte, c.Request().ContentLength())
-		_, err := c.Request().Body().Read(_body)
+		bodyBuf := bytes.NewBuffer(nil)
+		_, err := io.Copy(bodyBuf, c.Request().Body())
 		if err != nil && err != io.EOF {
 			log.Errorf("Can't read request http body for application/json. Error: %v", err)
 		} else {
-			body = string(_body)
+			body = bodyBuf.String()
 		}
 	}
 	return map[string]interface{}{

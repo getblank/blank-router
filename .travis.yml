@@ -4,6 +4,7 @@ os:
 go:
   - 1.6.2
 before_install:
+  - sudo apt-get update -qq
   - sudo apt-get install -qq upx
   - go get -u golang.org/x/net/websocket
   - go get -u github.com/pkg/errors

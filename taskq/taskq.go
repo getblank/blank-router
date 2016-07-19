@@ -21,6 +21,7 @@ const (
 	DbFind          = "dbFind"
 	DbLoadRefs      = "dbLoadRefs"
 	DbPush          = "dbPush"
+	WidgetData      = "widgetData"
 	Auth            = "authentication"
 	UserConfig      = "userConfig"
 	DbAction        = "action"

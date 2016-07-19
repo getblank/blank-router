@@ -305,6 +305,17 @@ func rgxRpcHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 				"query": args[0],
 			}
 			return taskq.PushAndGetResult(t, time.Second*5)
+		case "widget-data":
+			if len(args) < 3 {
+				return nil, berrors.ErrInvalidArguments
+			}
+			t.Type = taskq.WidgetData
+			t.Arguments = map[string]interface{}{
+				"widgetId": args[0],
+				"data":     args[1],
+				"itemId":   args[2],
+			}
+			return taskq.PushAndGetResult(t, 0)
 		}
 	}
 	return nil, nil

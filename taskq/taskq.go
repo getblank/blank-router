@@ -23,6 +23,7 @@ const (
 	DbPush          = "dbPush"
 	WidgetData      = "widgetData"
 	Auth            = "authentication"
+	SignUp          = "signup"
 	UserConfig      = "userConfig"
 	DbAction        = "action"
 	HTTPHook        = "httpHook"

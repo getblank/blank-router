@@ -46,7 +46,9 @@ func wampInit() *wango.Wango {
 	w.RegisterRPCHandler(uriAction, actionHandler)
 	w.RegisterRPCHandler(rgxRPC.Regexp, rgxRpcHandler)
 
-	w.RegisterRPCHandler(uriSignUp, anyHandler)
+	w.RegisterRPCHandler("com.check-user", checkUserHandler)
+
+	w.RegisterRPCHandler(uriSignUp, signUpHandler)
 	w.RegisterRPCHandler(uriResetPasswordRequest, anyHandler)
 	w.RegisterRPCHandler(uriResetPassword, anyHandler)
 
@@ -133,6 +135,45 @@ func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	}
 
 	return res.Result, nil
+}
+
+func checkUserHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	if len(args) == 0 {
+		return nil, berrors.ErrInvalidArguments
+	}
+	t := taskq.Task{
+		Type:   taskq.DbFind,
+		UserID: "root",
+		Store:  "users",
+		Arguments: map[string]interface{}{
+			"query": map[string]interface{}{
+				"query": map[string]interface{}{
+					"email": args[0],
+				},
+				"props": []string{"_id"},
+			},
+		},
+	}
+	_res, err := taskq.PushAndGetResult(t, time.Second*5)
+	if err != nil {
+		return "USER_NOT_FOUND", nil
+	}
+	res, ok := _res.(map[string]interface{})
+	if !ok {
+		return nil, berrors.ErrError
+	}
+	_items, ok := res["items"]
+	if !ok {
+		return nil, berrors.ErrError
+	}
+	items, ok := _items.([]interface{})
+	if !ok {
+		return nil, berrors.ErrError
+	}
+	if len(items) > 0 {
+		return "USER_EXISTS", nil
+	}
+	return "USER_NOT_FOUND", nil
 }
 
 func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -229,6 +270,28 @@ func signOutHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 	}
 	err := intranet.DeleteSession(cred.apiKey)
 	return nil, err
+}
+
+func signUpHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	if len(args) == 0 {
+		return nil, berrors.ErrInvalidArguments
+	}
+	if c.GetExtra() != nil {
+		return nil, errors.New("already logged in, can't signup")
+	}
+	arguments, ok := args[0].(map[string]interface{})
+	if !ok {
+		return nil, berrors.ErrInvalidArguments
+	}
+	t := taskq.Task{
+		Type:      taskq.SignUp,
+		Arguments: arguments,
+	}
+	res, err := taskq.PushAndGetResult(t, time.Second*10)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func stateHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {

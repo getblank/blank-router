@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gemnasium/logrus-graylog-hook"
 	"github.com/spf13/cobra"
-	"gopkg.in/gemnasium/logrus-graylog-hook.v1"
 
 	"github.com/getblank/blank-router/internet"
 	"github.com/getblank/blank-router/intranet"
@@ -40,7 +40,7 @@ func main() {
 		if facility == "" {
 			facility = "BLANK"
 		}
-		hook := graylog.NewGraylogHook(host+":"+port, facility, map[string]interface{}{"source-app": source})
+		hook := graylog.NewGraylogHook(host+":"+port, map[string]interface{}{"source-app": source})
 		log.AddHook(hook)
 	}
 

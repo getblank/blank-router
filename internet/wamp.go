@@ -17,7 +17,7 @@ const (
 	uriSignIn               = "com.sign-in"
 	uriSignOut              = "com.sign-out"
 	uriSignUp               = "com.sign-up"
-	uriResetPasswordRequest = "com.send-reset-link"
+	uriPasswordResetRequest = "com.send-reset-link"
 	uriResetPassword        = "com.reset-password"
 
 	uriState  = "com.state"
@@ -49,8 +49,8 @@ func wampInit() *wango.Wango {
 	w.RegisterRPCHandler("com.check-user", checkUserHandler)
 
 	w.RegisterRPCHandler(uriSignUp, signUpHandler)
-	w.RegisterRPCHandler(uriResetPasswordRequest, anyHandler)
-	w.RegisterRPCHandler(uriResetPassword, anyHandler)
+	w.RegisterRPCHandler(uriPasswordResetRequest, passwordResetRequestHandler)
+	w.RegisterRPCHandler(uriResetPassword, resetPasswordHandler)
 
 	w.RegisterSubHandler(uriSubUser, subUserHandler, nil, nil)
 	w.RegisterSubHandler(uriSubConfig, subConfigHandler, nil, nil)
@@ -174,6 +174,36 @@ func checkUserHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		return "USER_EXISTS", nil
 	}
 	return "USER_NOT_FOUND", nil
+}
+
+func passwordResetRequestHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	if len(args) == 0 {
+		return nil, berrors.ErrInvalidArguments
+	}
+	arguments, ok := args[0].(map[string]interface{})
+	if !ok {
+		return nil, berrors.ErrInvalidArguments
+	}
+	t := taskq.Task{
+		Type:      taskq.PasswordResetRequest,
+		Arguments: arguments,
+	}
+	return taskq.PushAndGetResult(t, time.Second*30)
+}
+
+func resetPasswordHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	if len(args) == 0 {
+		return nil, berrors.ErrInvalidArguments
+	}
+	arguments, ok := args[0].(map[string]interface{})
+	if !ok {
+		return nil, berrors.ErrInvalidArguments
+	}
+	t := taskq.Task{
+		Type:      taskq.PasswordReset,
+		Arguments: arguments,
+	}
+	return taskq.PushAndGetResult(t, time.Second*30)
 }
 
 func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {

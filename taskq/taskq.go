@@ -15,20 +15,22 @@ const (
 )
 
 const (
-	DbGet           = "dbGet"
-	DbSet           = "dbSet"
-	DbDelete        = "dbDelete"
-	DbFind          = "dbFind"
-	DbLoadRefs      = "dbLoadRefs"
-	DbPush          = "dbPush"
-	WidgetData      = "widgetData"
-	Auth            = "authentication"
-	SignUp          = "signup"
-	UserConfig      = "userConfig"
-	DbAction        = "action"
-	HTTPHook        = "httpHook"
-	ScheduledScript = "scheduledScript"
-	StoreLifeCycle  = "storeLifeCycle"
+	DbGet                = "dbGet"
+	DbSet                = "dbSet"
+	DbDelete             = "dbDelete"
+	DbFind               = "dbFind"
+	DbLoadRefs           = "dbLoadRefs"
+	DbPush               = "dbPush"
+	WidgetData           = "widgetData"
+	Auth                 = "authentication"
+	SignUp               = "signup"
+	PasswordResetRequest = "passwordResetRequest"
+	PasswordReset        = "passwordReset"
+	UserConfig           = "userConfig"
+	DbAction             = "action"
+	HTTPHook             = "httpHook"
+	ScheduledScript      = "scheduledScript"
+	StoreLifeCycle       = "storeLifeCycle"
 )
 
 var (

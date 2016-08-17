@@ -26,6 +26,7 @@ import (
 var (
 	routesBuildingCompleted bool
 	routesMutex             sync.Mutex
+	apiV1baseURI            = "/api/v1/"
 	errUserIDNotFound       = errors.New("not found")
 )
 
@@ -43,7 +44,11 @@ func onConfigUpdate(c map[string]config.Store) {
 	if routesBuildingCompleted {
 		log.Warn("Routes already built. Need to restart if http hooks or actions modified.")
 	}
+	httpEnabledStores := []config.Store{}
 	for s, store := range c {
+		if store.HTTPAPI {
+			httpEnabledStores = append(httpEnabledStores, store)
+		}
 		storeName := s
 		groupURI := "/hooks/" + storeName + "/"
 		group := e.Group(groupURI)
@@ -114,6 +119,7 @@ func onConfigUpdate(c map[string]config.Store) {
 	}
 
 	routesBuildingCompleted = true
+	createRESTAPI(httpEnabledStores)
 }
 
 func createFileHandlers(storeName string) {

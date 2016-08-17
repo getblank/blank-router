@@ -10,12 +10,14 @@ var (
 
 // Store is a small representation of store in config
 type Store struct {
-	Type           string     `json:"type"`
-	Actions        []Action   `json:"actions,omitempty"`
-	StoreActions   []Action   `json:"storeActions,omitempty"`
-	HTTPHooks      []HTTPHook `json:"httpHooks,omitempty"`
-	HTTPAPI        bool       `json:"httpApi,omitempty"`
-	StoreLifeCycle Hooks      `json:"storeLifeCycle,omitempty"`
+	Store          string      `json:"store"` // just name of the store
+	Type           string      `json:"type"`
+	Props          interface{} `json:"props"` // just dummy for props needed when HTTPAPI enabled
+	Actions        []Action    `json:"actions,omitempty"`
+	StoreActions   []Action    `json:"storeActions,omitempty"`
+	HTTPHooks      []HTTPHook  `json:"httpHooks,omitempty"`
+	HTTPAPI        bool        `json:"httpApi,omitempty"`
+	StoreLifeCycle Hooks       `json:"storeLifeCycle,omitempty"`
 }
 
 // Action  is a small representation of action in config
@@ -65,9 +67,11 @@ func clone(c map[string]Store) map[string]Store {
 	var res = map[string]Store{}
 	for storeName, store := range c {
 		s := Store{
+			Store:   storeName,
+			Type:    store.Type,
 			HTTPAPI: store.HTTPAPI,
+			Props:   store.Props,
 		}
-		s.Type = store.Type
 		if store.Actions != nil {
 			s.Actions = make([]Action, len(store.Actions))
 			for i, a := range store.Actions {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
@@ -12,6 +13,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"golang.org/x/net/websocket"
 
+	"github.com/getblank/blank-router/berrors"
 	"github.com/getblank/blank-router/config"
 	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
@@ -31,6 +33,8 @@ func Init() {
 	e.Use(middleware.Recover())
 
 	e.GET("/*", assetsHandler)
+	e.POST("/login", loginHandler)
+	e.POST("/register", registerHandler)
 
 	wamp := wampInit()
 	e.GET("/wamp", standard.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
@@ -46,6 +50,71 @@ func Init() {
 	})
 
 	go e.Run(standard.New(":" + port))
+}
+
+func loginHandler(c echo.Context) error {
+	login := c.FormValue("login")
+	if login == "" {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
+	}
+	password := c.FormValue("password")
+	if password == "" {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
+	}
+	t := taskq.Task{
+		Type: taskq.Auth,
+		Arguments: map[string]interface{}{
+			"login":    login,
+			"password": password,
+		},
+	}
+	res, err := taskq.PushAndGetResult(t, time.Second*5)
+	if err != nil {
+		return c.JSON(http.StatusSeeOther, err.Error())
+	}
+	user, ok := res.(map[string]interface{})
+	if !ok {
+		log.WithField("result", res).Warn("Invalid type of result on http login")
+		return c.JSON(http.StatusInternalServerError, berrors.ErrError.Error())
+	}
+	userID, ok := user["_id"].(string)
+	if !ok {
+		log.WithField("user._id", user["_id"]).Warn("Invalid type of user._id on http login")
+		return c.JSON(http.StatusInternalServerError, berrors.ErrError.Error())
+	}
+
+	apiKey, err := intranet.NewSession(userID, user)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	result := map[string]interface{}{
+		"key": apiKey,
+	}
+	return c.JSON(http.StatusOK, result)
+}
+
+func registerHandler(c echo.Context) error {
+	email := c.FormValue("email")
+	if email == "" {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
+	}
+	password := c.FormValue("password")
+	if password == "" {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
+	}
+	t := taskq.Task{
+		Type: taskq.SignUp,
+		Arguments: map[string]interface{}{
+			"email":    email,
+			"password": password,
+		},
+	}
+	res, err := taskq.PushAndGetResult(t, time.Second*10)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 func commonSettingsHandler(c echo.Context) error {

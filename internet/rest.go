@@ -96,6 +96,16 @@ func createRESTAPIForStore(store config.Store) {
 			log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST action REST method %s", lowerActionURI)
 		}
 	}
+	for _, a := range store.StoreActions {
+		actionURI := baseURI + "/" + a.ID
+		lowerActionURI := lowerBaseURI + "/" + a.ID
+		e.POST(actionURI, restActionHandler(store.Store, a.ID))
+		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST storeAction REST method %s", actionURI)
+		if actionURI != lowerActionURI {
+			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID))
+			log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST storeAction REST method %s", lowerActionURI)
+		}
+	}
 }
 
 func restActionHandler(storeName, actionID string) echo.HandlerFunc {

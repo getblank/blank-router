@@ -37,7 +37,7 @@ func createRESTAPI(httpEnabledStores []config.Store) {
 			log.WithField("html", res).Error("Invalid response type from doc compiler")
 			return
 		}
-		e.Get(apiV1baseURI, func(c echo.Context) error {
+		e.GET(apiV1baseURI, func(c echo.Context) error {
 			return c.HTML(http.StatusOK, html)
 		})
 		log.Info("REST API Documentation generated")
@@ -51,33 +51,88 @@ func createRESTAPIForStore(store config.Store) {
 	baseURI := apiV1baseURI + store.Store
 	lowerBaseURI := strings.ToLower(baseURI)
 
-	e.Get(baseURI, getAllDocumentsHandler(store.Store))
+	e.GET(baseURI, restGetAllDocumentsHandler(store.Store))
+	log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET all REST method %s", baseURI)
 	if baseURI != lowerBaseURI {
-		e.Get(lowerBaseURI, getAllDocumentsHandler(store.Store))
+		e.GET(lowerBaseURI, restGetAllDocumentsHandler(store.Store))
+		log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET all REST method %s", lowerBaseURI)
 	}
 
-	e.Post(baseURI, postDocumentHandler(store.Store))
+	e.POST(baseURI, restPostDocumentHandler(store.Store))
+	log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST REST method %s", baseURI)
 	if baseURI != lowerBaseURI {
-		e.Post(lowerBaseURI, postDocumentHandler(store.Store))
+		e.POST(lowerBaseURI, restPostDocumentHandler(store.Store))
+		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST REST method %s", lowerBaseURI)
 	}
 
 	itemURI := baseURI + "/:id"
 	lowerItemURI := lowerBaseURI + "/:id"
-	e.Get(itemURI, getDocumentHandler(store.Store))
+	e.GET(itemURI, restGetDocumentHandler(store.Store))
+	log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET REST method %s", itemURI)
 	if itemURI != lowerItemURI {
-		e.Get(lowerItemURI, getDocumentHandler(store.Store))
+		e.GET(lowerItemURI, restGetDocumentHandler(store.Store))
+		log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET REST method %s", lowerItemURI)
 	}
-	e.Put(itemURI, putDocumentHandler(store.Store))
+	e.PUT(itemURI, restPutDocumentHandler(store.Store))
+	log.WithFields(log.Fields{"store": store.Store}).Infof("Created PUT REST method %s", itemURI)
 	if itemURI != lowerItemURI {
-		e.Put(lowerItemURI, putDocumentHandler(store.Store))
+		e.PUT(lowerItemURI, restPutDocumentHandler(store.Store))
+		log.WithFields(log.Fields{"store": store.Store}).Infof("Created PUT REST method %s", lowerItemURI)
 	}
-	e.Delete(itemURI, deleteDocumentHandler(store.Store))
+	e.DELETE(itemURI, restDeleteDocumentHandler(store.Store))
+	log.WithFields(log.Fields{"store": store.Store}).Infof("Created DELETE REST method %s", itemURI)
 	if itemURI != lowerItemURI {
-		e.Delete(lowerItemURI, deleteDocumentHandler(store.Store))
+		e.DELETE(lowerItemURI, restDeleteDocumentHandler(store.Store))
+		log.WithFields(log.Fields{"store": store.Store}).Infof("Created DELETE REST method %s", lowerItemURI)
+	}
+
+	for _, a := range store.Actions {
+		actionURI := itemURI + "/" + a.ID
+		lowerActionURI := lowerItemURI + "/" + a.ID
+		e.POST(actionURI, restActionHandler(store.Store, a.ID))
+		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST action REST method %s", actionURI)
+		if actionURI != lowerActionURI {
+			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID))
+			log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST action REST method %s", lowerActionURI)
+		}
 	}
 }
 
-func getAllDocumentsHandler(storeName string) echo.HandlerFunc {
+func restActionHandler(storeName, actionID string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		t := taskq.Task{
+			Type:   taskq.DbAction,
+			Store:  storeName,
+			UserID: userID,
+			Arguments: map[string]interface{}{
+				"itemId":   c.Param("id"),
+				"actionId": actionID,
+			},
+		}
+		if c.Request().ContentLength() != 0 {
+			var data interface{}
+			err = c.Bind(&data)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, err.Error())
+			}
+			t.Arguments["data"] = data
+		}
+		res, err := taskq.PushAndGetResult(t, time.Second*30)
+		if err != nil {
+			if strings.EqualFold(err.Error(), "not found") {
+				return c.JSON(http.StatusNotFound, err.Error())
+			}
+			return c.JSON(http.StatusSeeOther, err.Error())
+		}
+		return c.JSON(http.StatusOK, res)
+	}
+}
+
+func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
@@ -127,7 +182,7 @@ func getAllDocumentsHandler(storeName string) echo.HandlerFunc {
 	}
 }
 
-func getDocumentHandler(storeName string) echo.HandlerFunc {
+func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
@@ -156,7 +211,7 @@ func getDocumentHandler(storeName string) echo.HandlerFunc {
 	}
 }
 
-func postDocumentHandler(storeName string) echo.HandlerFunc {
+func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
@@ -190,7 +245,7 @@ func postDocumentHandler(storeName string) echo.HandlerFunc {
 	}
 }
 
-func putDocumentHandler(storeName string) echo.HandlerFunc {
+func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
@@ -222,7 +277,7 @@ func putDocumentHandler(storeName string) echo.HandlerFunc {
 	}
 }
 
-func deleteDocumentHandler(storeName string) echo.HandlerFunc {
+func restDeleteDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {

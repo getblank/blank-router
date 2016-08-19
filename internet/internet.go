@@ -36,6 +36,8 @@ func Init() {
 	e.POST("/login", loginHandler)
 	e.POST("/register", registerHandler)
 
+	e.GET("/facebook-login", facebookLoginHandler)
+
 	wamp := wampInit()
 	e.GET("/wamp", standard.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
 		wamp.WampHandler(ws, nil)
@@ -50,6 +52,38 @@ func Init() {
 	})
 
 	go e.Run(standard.New(":" + port))
+}
+
+func facebookLoginHandler(c echo.Context) error {
+	t := taskq.Task{
+		Type: taskq.Auth,
+		Arguments: map[string]interface{}{
+			"social": "facebook",
+			"code":   c.QueryParam("code"),
+		},
+	}
+	res, err := taskq.PushAndGetResult(t, time.Second*10)
+	if err != nil {
+		return c.HTML(http.StatusSeeOther, err.Error())
+	}
+	user, ok := res.(map[string]interface{})
+	if !ok {
+		log.WithField("result", res).Warn("Invalid type of result on http login")
+		return c.HTML(http.StatusInternalServerError, berrors.ErrError.Error())
+	}
+	userID, ok := user["_id"].(string)
+	if !ok {
+		log.WithField("user._id", user["_id"]).Warn("Invalid type of user._id on http login")
+		return c.HTML(http.StatusInternalServerError, berrors.ErrError.Error())
+	}
+
+	apiKey, err := intranet.NewSession(userID, user)
+	if err != nil {
+		return c.HTML(http.StatusInternalServerError, err.Error())
+	}
+
+	result := `<script>localStorage.setItem("tempKey", "` + apiKey + `"); window.location = location.protocol + "//" + location.host;</script>`
+	return c.HTML(http.StatusOK, result)
 }
 
 func loginHandler(c echo.Context) error {

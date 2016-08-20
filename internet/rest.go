@@ -110,6 +110,7 @@ func createRESTAPIForStore(store config.Store) {
 
 func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -144,6 +145,7 @@ func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 
 func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -194,6 +196,7 @@ func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 
 func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -223,6 +226,7 @@ func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 
 func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -257,6 +261,7 @@ func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 
 func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -289,6 +294,7 @@ func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 
 func restDeleteDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -314,4 +320,8 @@ func restDeleteDocumentHandler(storeName string) echo.HandlerFunc {
 		}
 		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 	}
+}
+
+func writeHeader(c echo.Context) {
+	c.Response().Header().Add("Access-Control-Allow-Origin", "*")
 }

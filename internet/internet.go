@@ -123,7 +123,8 @@ func loginHandler(c echo.Context) error {
 	}
 
 	result := map[string]interface{}{
-		"key": apiKey,
+		"key":  apiKey,
+		"user": user,
 	}
 	return c.JSON(http.StatusOK, result)
 }

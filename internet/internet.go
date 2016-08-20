@@ -87,6 +87,7 @@ func facebookLoginHandler(c echo.Context) error {
 }
 
 func loginHandler(c echo.Context) error {
+	writeHeader(c)
 	login := c.FormValue("login")
 	if login == "" {
 		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
@@ -130,6 +131,7 @@ func loginHandler(c echo.Context) error {
 }
 
 func registerHandler(c echo.Context) error {
+	writeHeader(c)
 	email := c.FormValue("email")
 	if email == "" {
 		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())

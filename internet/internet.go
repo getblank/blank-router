@@ -58,8 +58,9 @@ func facebookLoginHandler(c echo.Context) error {
 	t := taskq.Task{
 		Type: taskq.Auth,
 		Arguments: map[string]interface{}{
-			"social": "facebook",
-			"code":   c.QueryParam("code"),
+			"social":      "facebook",
+			"code":        c.QueryParam("code"),
+			"redirectUrl": c.QueryParam("redirectUrl"),
 		},
 	}
 	res, err := taskq.PushAndGetResult(t, time.Second*10)
@@ -82,7 +83,17 @@ func facebookLoginHandler(c echo.Context) error {
 		return c.HTML(http.StatusInternalServerError, err.Error())
 	}
 
-	result := `<script>localStorage.setItem("tempKey", "` + apiKey + `"); window.location = location.protocol + "//" + location.host;</script>`
+	result := `<script>
+		(function(){
+			localStorage.setItem("tempKey", "` + apiKey + `");
+			let redirectUrl = location.search.match(/redirectUrl=([^&]*)&?/);
+			if (redirectUrl) {
+				window.location = decodeURIComponent(redirectUrl[1]);
+				return;
+			}
+			window.location = location.protocol + "//" + location.host;
+		}());
+	</script>`
 	return c.HTML(http.StatusOK, result)
 }
 
@@ -143,8 +154,9 @@ func registerHandler(c echo.Context) error {
 	t := taskq.Task{
 		Type: taskq.SignUp,
 		Arguments: map[string]interface{}{
-			"email":    email,
-			"password": password,
+			"email":       email,
+			"password":    password,
+			"redirectUrl": c.QueryParam("redirectUrl"),
 		},
 	}
 	res, err := taskq.PushAndGetResult(t, time.Second*10)

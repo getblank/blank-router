@@ -34,6 +34,7 @@ func Init() {
 
 	e.GET("/*", assetsHandler)
 	e.POST("/login", loginHandler)
+	e.POST("/logout", logoutHandler)
 	e.POST("/register", registerHandler)
 
 	e.GET("/facebook-login", facebookLoginHandler)
@@ -139,6 +140,21 @@ func loginHandler(c echo.Context) error {
 		"user": user,
 	}
 	return c.JSON(http.StatusOK, result)
+}
+
+func logoutHandler(c echo.Context) error {
+	apiKey := c.QueryParam("key")
+	if apiKey == "" {
+		return c.JSON(http.StatusBadRequest, errUserIDNotFound.Error())
+	}
+	err := intranet.DeleteSession(apiKey)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	if redirectURL := c.QueryParam("redirectUrl"); redirectURL != "" {
+		return c.Redirect(http.StatusTemporaryRedirect, redirectURL)
+	}
+	return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 }
 
 func registerHandler(c echo.Context) error {

@@ -28,6 +28,7 @@ var (
 // Init starts internet http server
 func Init() {
 	log.Info("Init internet server on port ", port)
+	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Gzip())
 	e.Use(loggerMiddleware())
 	e.Use(middleware.Recover())

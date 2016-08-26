@@ -149,10 +149,7 @@ func logoutHandler(c echo.Context) error {
 	if apiKey == "" {
 		return c.JSON(http.StatusBadRequest, errUserIDNotFound.Error())
 	}
-	err := intranet.DeleteSession(apiKey)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
+	intranet.DeleteSession(apiKey)
 	if redirectURL := c.QueryParam("redirectUrl"); redirectURL != "" {
 		return c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 	}

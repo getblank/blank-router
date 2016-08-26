@@ -150,11 +150,11 @@ func logoutHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errUserIDNotFound.Error())
 	}
 	err := intranet.DeleteSession(apiKey)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
 	if redirectURL := c.QueryParam("redirectUrl"); redirectURL != "" {
 		return c.Redirect(http.StatusTemporaryRedirect, redirectURL)
+	}
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 }

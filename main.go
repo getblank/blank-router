@@ -59,7 +59,7 @@ func main() {
 			log.Info("Router started")
 			settings.SRAddress = *srAddress
 			settings.SRHTTPAddress = "http:" + strings.TrimPrefix(*srAddress, "ws:")
-			go internet.Init()
+			go internet.Init(version)
 			intranet.Init()
 		},
 	}

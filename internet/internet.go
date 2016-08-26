@@ -36,6 +36,7 @@ func Init() {
 	e.GET("/*", assetsHandler)
 	e.POST("/login", loginHandler)
 	e.POST("/logout", logoutHandler)
+	e.GET("/logout", logoutHandler)
 	e.POST("/register", registerHandler)
 
 	e.GET("/facebook-login", facebookLoginHandler)

@@ -37,6 +37,8 @@ type result struct {
 	Code     int               `json:"code"`
 	Header   map[string]string `json:"header"`
 	FileName string            `json:"fileName"`
+	Store    string            `json:"store"`
+	ID       string            `json:"_id"`
 }
 
 func onConfigUpdate(c map[string]config.Store) {
@@ -141,17 +143,7 @@ func createFileHandlers(storeName string) {
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
-
-		res, err := http.Get(settings.GetFileStoreAddress() + "/" + storeName + "/" + fileID)
-		if err != nil {
-			return c.JSON(res.StatusCode, res.Status)
-		}
-		defer res.Body.Close()
-		fileName := res.Header.Get("file-name")
-		c.Response().Header().Add("Content-Disposition", `attachment; filename="`+fileName+`"`)
-		c.Response().Header().Add("Content-Type", getContentType(fileName))
-		body, _ := ioutil.ReadAll(res.Body)
-		c.Response().Write(body)
+		writeFileFromFileStore(c, storeName, fileID)
 		return nil
 	})
 
@@ -215,6 +207,19 @@ func createFileHandlers(storeName string) {
 		return c.JSON(http.StatusOK, nil)
 	})
 	log.Infof("Created handlers for fileStore '%s' with path %s:id", storeName, groupURI)
+}
+
+func writeFileFromFileStore(c echo.Context, storeName, fileID string) error {
+	res, err := http.Get(settings.GetFileStoreAddress() + "/" + storeName + "/" + fileID)
+	if err != nil {
+		return c.JSON(res.StatusCode, res.Status)
+	}
+	defer res.Body.Close()
+	fileName := res.Header.Get("file-name")
+	c.Response().Header().Add("Content-Type", getContentType(fileName))
+	body, _ := ioutil.ReadAll(res.Body)
+	_, err = c.Response().Write(body)
+	return err
 }
 
 func createHTTPActions(storeName string, actions []config.Action) {
@@ -340,11 +345,14 @@ func defaultResponse(res *result, c echo.Context) error {
 	case "XML", "xml":
 		return c.XMLBlob(code, []byte(res.Data))
 	case "file":
+		if res.Store != "" && res.ID != "" {
+			return writeFileFromFileStore(c, res.Store, res.ID)
+		}
 		buffer, err := base64.StdEncoding.DecodeString(res.Data)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, "can't decode file")
 		}
-		return c.Attachment(bytes.NewReader(buffer), res.FileName)
+		return c.ServeContent(bytes.NewReader(buffer), res.FileName, time.Now())
 	default:
 		return c.JSON(http.StatusSeeOther, "unknown encoding type")
 	}

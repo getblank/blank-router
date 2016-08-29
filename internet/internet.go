@@ -35,10 +35,10 @@ func Init(version string) {
 	e.Use(middleware.Recover())
 
 	e.GET("/*", assetsHandler)
-	e.POST("/login", loginHandler)
-	e.POST("/logout", logoutHandler)
-	e.GET("/logout", logoutHandler)
-	e.POST("/register", registerHandler)
+	e.POST("/login", loginHandler, allowAnyOriginMiddleware())
+	e.POST("/logout", logoutHandler, allowAnyOriginMiddleware())
+	e.GET("/logout", logoutHandler, allowAnyOriginMiddleware())
+	e.POST("/register", registerHandler, allowAnyOriginMiddleware())
 
 	e.GET("/facebook-login", facebookLoginHandler)
 
@@ -102,7 +102,6 @@ func facebookLoginHandler(c echo.Context) error {
 }
 
 func loginHandler(c echo.Context) error {
-	writeHeader(c)
 	login := c.FormValue("login")
 	if login == "" {
 		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
@@ -161,7 +160,6 @@ func logoutHandler(c echo.Context) error {
 }
 
 func registerHandler(c echo.Context) error {
-	writeHeader(c)
 	email := c.FormValue("email")
 	if email == "" {
 		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())

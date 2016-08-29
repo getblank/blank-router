@@ -51,58 +51,58 @@ func createRESTAPIForStore(store config.Store) {
 	baseURI := apiV1baseURI + store.Store
 	lowerBaseURI := strings.ToLower(baseURI)
 
-	e.GET(baseURI, restGetAllDocumentsHandler(store.Store))
+	e.GET(baseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware())
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET all REST method %s", baseURI)
 	if baseURI != lowerBaseURI {
-		e.GET(lowerBaseURI, restGetAllDocumentsHandler(store.Store))
+		e.GET(lowerBaseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware())
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET all REST method %s", lowerBaseURI)
 	}
 
-	e.POST(baseURI, restPostDocumentHandler(store.Store))
+	e.POST(baseURI, restPostDocumentHandler(store.Store), allowAnyOriginMiddleware())
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST REST method %s", baseURI)
 	if baseURI != lowerBaseURI {
-		e.POST(lowerBaseURI, restPostDocumentHandler(store.Store))
+		e.POST(lowerBaseURI, restPostDocumentHandler(store.Store), allowAnyOriginMiddleware())
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST REST method %s", lowerBaseURI)
 	}
 
 	itemURI := baseURI + "/:id"
 	lowerItemURI := lowerBaseURI + "/:id"
-	e.GET(itemURI, restGetDocumentHandler(store.Store))
+	e.GET(itemURI, restGetDocumentHandler(store.Store), allowAnyOriginMiddleware())
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET REST method %s", itemURI)
 	if itemURI != lowerItemURI {
-		e.GET(lowerItemURI, restGetDocumentHandler(store.Store))
+		e.GET(lowerItemURI, restGetDocumentHandler(store.Store), allowAnyOriginMiddleware())
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET REST method %s", lowerItemURI)
 	}
-	e.PUT(itemURI, restPutDocumentHandler(store.Store))
+	e.PUT(itemURI, restPutDocumentHandler(store.Store), allowAnyOriginMiddleware())
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created PUT REST method %s", itemURI)
 	if itemURI != lowerItemURI {
-		e.PUT(lowerItemURI, restPutDocumentHandler(store.Store))
+		e.PUT(lowerItemURI, restPutDocumentHandler(store.Store), allowAnyOriginMiddleware())
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created PUT REST method %s", lowerItemURI)
 	}
-	e.DELETE(itemURI, restDeleteDocumentHandler(store.Store))
+	e.DELETE(itemURI, restDeleteDocumentHandler(store.Store), allowAnyOriginMiddleware())
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created DELETE REST method %s", itemURI)
 	if itemURI != lowerItemURI {
-		e.DELETE(lowerItemURI, restDeleteDocumentHandler(store.Store))
+		e.DELETE(lowerItemURI, restDeleteDocumentHandler(store.Store), allowAnyOriginMiddleware())
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created DELETE REST method %s", lowerItemURI)
 	}
 
 	for _, a := range store.Actions {
 		actionURI := itemURI + "/" + a.ID
 		lowerActionURI := lowerItemURI + "/" + a.ID
-		e.POST(actionURI, restActionHandler(store.Store, a.ID))
+		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware())
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST action REST method %s", actionURI)
 		if actionURI != lowerActionURI {
-			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID))
+			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware())
 			log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST action REST method %s", lowerActionURI)
 		}
 	}
 	for _, a := range store.StoreActions {
 		actionURI := baseURI + "/" + a.ID
 		lowerActionURI := lowerBaseURI + "/" + a.ID
-		e.POST(actionURI, restActionHandler(store.Store, a.ID))
+		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware())
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST storeAction REST method %s", actionURI)
 		if actionURI != lowerActionURI {
-			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID))
+			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware())
 			log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST storeAction REST method %s", lowerActionURI)
 		}
 	}
@@ -110,7 +110,6 @@ func createRESTAPIForStore(store config.Store) {
 
 func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -145,7 +144,6 @@ func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 
 func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -196,7 +194,6 @@ func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 
 func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -226,7 +223,6 @@ func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 
 func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -261,7 +257,6 @@ func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 
 func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -294,7 +289,6 @@ func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 
 func restDeleteDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		writeHeader(c)
 		userID, err := getUserID(c)
 		if err != nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -320,8 +314,4 @@ func restDeleteDocumentHandler(storeName string) echo.HandlerFunc {
 		}
 		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 	}
-}
-
-func writeHeader(c echo.Context) {
-	c.Response().Header().Add("Access-Control-Allow-Origin", "*")
 }

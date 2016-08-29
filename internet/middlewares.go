@@ -11,6 +11,15 @@ import (
 	"github.com/labstack/echo"
 )
 
+func allowAnyOriginMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Response().Header().Add("Access-Control-Allow-Origin", "*")
+			return next(c)
+		}
+	}
+}
+
 func loggerMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -41,6 +50,15 @@ func loggerMiddleware() echo.MiddlewareFunc {
 			}).Info("Request completed")
 
 			return nil
+		}
+	}
+}
+
+func serverHeadersMiddleware(version string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Response().Header().Add("Server", "Blank Router/"+version+" (https://getblank.net)")
+			return next(c)
 		}
 	}
 }

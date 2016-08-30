@@ -3,6 +3,7 @@ package internet
 import (
 	"io"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -54,8 +55,12 @@ func Init(version string) {
 	intranet.OnEvent(func(uri string, event interface{}, connIDs []string) {
 		w.SendEvent(uri, event, connIDs)
 	})
-
-	go e.Run(standard.New(":" + port))
+	if certFile, keyFile := os.Getenv("BLANK_SSL_CRT"), os.Getenv("BLANK_SSL_KEY"); certFile != "" && keyFile != "" {
+		log.Info("Starting internet server with SSL on port ", port)
+		e.Run(standard.WithTLS(":"+port, certFile, keyFile))
+	}
+	log.Info("Starting internet server on port ", port)
+	e.Run(standard.New(":" + port))
 }
 
 func facebookLoginHandler(c echo.Context) error {

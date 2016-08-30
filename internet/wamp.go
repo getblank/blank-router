@@ -299,6 +299,7 @@ func signOutHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 		return nil, berrors.ErrError
 	}
 	err := intranet.DeleteSession(cred.apiKey)
+	c.SetExtra(nil)
 	return nil, err
 }
 

@@ -335,6 +335,11 @@ func defaultResponse(res *result, c echo.Context) error {
 		c.Response().Header().Set(k, v)
 	}
 	switch res.Type {
+	case "REDIRECT", "redirect":
+		if code == 0 {
+			code = http.StatusTemporaryRedirect
+		}
+		return c.Redirect(code, res.Data)
 	case "JSON", "json":
 		if res.RAWData == nil {
 			return c.JSONBlob(code, []byte(res.Data))

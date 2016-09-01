@@ -336,8 +336,8 @@ func defaultResponse(res *result, c echo.Context) error {
 	}
 	switch res.Type {
 	case "REDIRECT", "redirect":
-		if code == 0 {
-			code = http.StatusTemporaryRedirect
+		if code == 200 {
+			code = http.StatusFound
 		}
 		return c.Redirect(code, res.Data)
 	case "JSON", "json":

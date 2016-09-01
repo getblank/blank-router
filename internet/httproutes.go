@@ -21,6 +21,7 @@ import (
 	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
 	"github.com/getblank/blank-router/taskq"
+	"github.com/getblank/uuid"
 )
 
 var (
@@ -125,87 +126,12 @@ func onConfigUpdate(c map[string]config.Store) {
 }
 
 func createFileHandlers(storeName string) {
-	groupURI := "/files/" + storeName + "/"
+	groupURI := "/files/" + storeName
 	group := e.Group(groupURI)
-	group.GET(":id", func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
-			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
-		}
-		fileID := c.Param("id")
-		t := taskq.Task{
-			Type:      taskq.DbGet,
-			UserID:    userID,
-			Store:     storeName,
-			Arguments: map[string]interface{}{"_id": fileID},
-		}
-		_, err = taskq.PushAndGetResult(t, time.Second*5)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, err.Error())
-		}
-		writeFileFromFileStore(c, storeName, fileID)
-		return nil
-	})
-
-	group.POST(":id", func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
-			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
-		}
-		fileID := c.Param("id")
-		fileHeader, err := c.FormFile("file")
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
-		}
-		fileName := fileHeader.Filename
-		t := taskq.Task{
-			Type:      taskq.DbSet,
-			UserID:    userID,
-			Store:     storeName,
-			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID, "name": fileName}},
-		}
-		_, err = taskq.PushAndGetResult(t, time.Second*5)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, err.Error())
-		}
-		file, err := fileHeader.Open()
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
-		}
-		defer file.Close()
-
-		req, err := http.NewRequest(http.MethodPost, settings.GetFileStoreAddress()+"/"+storeName+"/"+fileID, file)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, err.Error())
-		}
-		req.Header.Set("file-name", fileName)
-		client := &http.Client{}
-		_, err = client.Do(req)
-		if err != nil {
-			// error handling
-		}
-		return c.JSON(http.StatusOK, nil)
-	})
-
-	group.DELETE(":id", func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
-			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
-		}
-		fileID := c.Param("id")
-		t := taskq.Task{
-			Type:      taskq.DbDelete,
-			UserID:    userID,
-			Store:     storeName,
-			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID}},
-		}
-		_, err = taskq.PushAndGetResult(t, time.Second*5)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, err.Error())
-		}
-		// we don't delete files from file store for now
-		return c.JSON(http.StatusOK, nil)
-	})
+	group.GET("/:id", getFileHandler(storeName))
+	group.POST("/", postFileHandler(storeName))
+	group.POST("/:id", postFileHandler(storeName))
+	group.DELETE("/:id", deleteFileHandler(storeName))
 	log.Infof("Created handlers for fileStore '%s' with path %s:id", storeName, groupURI)
 }
 
@@ -374,4 +300,93 @@ func parseResult(_res interface{}) (*result, error) {
 		err = errors.Wrap(err, "when unmarshal result")
 	}
 	return res, err
+}
+
+func getFileHandler(storeName string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		fileID := c.Param("id")
+		t := taskq.Task{
+			Type:      taskq.DbGet,
+			UserID:    userID,
+			Store:     storeName,
+			Arguments: map[string]interface{}{"_id": fileID},
+		}
+		_, err = taskq.PushAndGetResult(t, time.Second*5)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+		writeFileFromFileStore(c, storeName, fileID)
+		return nil
+	}
+}
+
+func postFileHandler(storeName string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		fileID := c.Param("id")
+		if fileID == "" {
+			fileID = uuid.NewV4()
+		}
+		fileHeader, err := c.FormFile("file")
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
+		}
+		fileName := fileHeader.Filename
+		t := taskq.Task{
+			Type:      taskq.DbSet,
+			UserID:    userID,
+			Store:     storeName,
+			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID, "name": fileName}},
+		}
+		_, err = taskq.PushAndGetResult(t, time.Second*5)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+		file, err := fileHeader.Open()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		defer file.Close()
+
+		req, err := http.NewRequest(http.MethodPost, settings.GetFileStoreAddress()+"/"+storeName+"/"+fileID, file)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		req.Header.Set("file-name", fileName)
+		client := &http.Client{}
+		_, err = client.Do(req)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
+		return c.JSON(http.StatusOK, fileID)
+	}
+}
+
+func deleteFileHandler(storeName string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID, err := getUserID(c)
+		if err != nil {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		fileID := c.Param("id")
+		t := taskq.Task{
+			Type:      taskq.DbDelete,
+			UserID:    userID,
+			Store:     storeName,
+			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID}},
+		}
+		_, err = taskq.PushAndGetResult(t, time.Second*5)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+		// we don't delete files from file store for now
+		return c.JSON(http.StatusOK, nil)
+	}
 }

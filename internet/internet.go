@@ -181,6 +181,15 @@ func registerHandler(c echo.Context) error {
 			"redirectUrl": c.QueryParam("redirectUrl"),
 		},
 	}
+	formParams := c.FormParams()
+	if len(formParams) > 2 {
+		for k, v := range formParams {
+			if k == "email" || k == "password" || len(v) == 0 {
+				continue
+			}
+			t.Arguments[k] = v[0]
+		}
+	}
 	res, err := taskq.PushAndGetResult(t, time.Second*10)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())

@@ -44,7 +44,7 @@ func wampInit() *wango.Wango {
 	w.RegisterRPCHandler(uriSignOut, signOutHandler)
 	w.RegisterRPCHandler(uriState, stateHandler)
 	w.RegisterRPCHandler(uriAction, actionHandler)
-	w.RegisterRPCHandler(rgxRPC.Regexp, rgxRpcHandler)
+	w.RegisterRPCHandler(rgxRPC.Regexp, rgxRPCHandler)
 
 	w.RegisterRPCHandler("com.check-user", checkUserHandler)
 
@@ -329,7 +329,7 @@ func stateHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, 
 	return "ready", nil
 }
 
-func rgxRpcHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+func rgxRPCHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
 	if len(args) == 0 {
 		return nil, berrors.ErrInvalidArguments
 	}

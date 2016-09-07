@@ -306,7 +306,10 @@ func getFileHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID, err := getUserID(c)
 		if err != nil {
-			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+			if err != errUserIDNotFound {
+				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+			}
+			userID = "guest"
 		}
 		fileID := c.Param("id")
 		t := taskq.Task{

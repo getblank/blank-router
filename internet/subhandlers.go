@@ -36,7 +36,7 @@ func subConfigHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		Type:   taskq.UserConfig,
 		UserID: cred.userID,
 	}
-	resChan := taskq.Push(t)
+	resChan := taskq.Push(&t)
 
 	res := <-resChan
 	if res.Err != "" {
@@ -77,4 +77,3 @@ func unsubStoresHandler(c *wango.Conn, uri string, args ...interface{}) (interfa
 	}
 	return nil, intranet.DeleteSubscription(cred.apiKey, c.ID(), uri)
 }
-

@@ -209,7 +209,7 @@ func commonSettingsHandler(c echo.Context) error {
 		}
 	}
 
-	resChan := taskq.Push(t)
+	resChan := taskq.Push(&t)
 
 	res := <-resChan
 	if res.Err != "" {

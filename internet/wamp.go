@@ -166,7 +166,7 @@ func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	if len(args) > 3 {
 		t.Arguments["data"] = args[3]
 	}
-	resChan := taskq.Push(t)
+	resChan := taskq.Push(&t)
 
 	res := <-resChan
 	if res.Err != "" {

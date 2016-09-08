@@ -34,9 +34,9 @@ const (
 )
 
 var (
-	mainQueue  chan Task
-	extraQueue chan Task
-	shiftQueue chan Task
+	mainQueue  chan *Task
+	extraQueue chan *Task
+	shiftQueue chan *Task
 
 	resultChans  map[uint64]chan Result
 	resultLocker sync.Mutex
@@ -60,7 +60,8 @@ type Task struct {
 	Store     string                 `json:"store"`
 	Type      string                 `json:"type"`
 	Arguments map[string]interface{} `json:"args"`
-	rotten    *bool
+	rotten    bool
+	sync.Mutex
 }
 
 // Done must be called when task is done
@@ -78,7 +79,7 @@ func Done(r Result) {
 }
 
 // Push ads new task to a queue with assigning new ID
-func Push(t Task) chan Result {
+func Push(t *Task) chan Result {
 	t.ID = nextID()
 	ch := make(chan Result)
 	resultLocker.Lock()
@@ -93,9 +94,7 @@ func Push(t Task) chan Result {
 // Second argument is a task timeout. If provided, when timeout reached and task will not completed yet,
 // error returns with nil result
 func PushAndGetResult(t Task, timeout time.Duration) (interface{}, error) {
-	var rotten bool
-	t.rotten = &rotten
-	resChan := Push(t)
+	resChan := Push(&t)
 	if timeout == 0 {
 		res := <-resChan
 		if res.Err != "" {
@@ -107,7 +106,9 @@ func PushAndGetResult(t Task, timeout time.Duration) (interface{}, error) {
 	timer := time.NewTimer(timeout)
 	select {
 	case <-timer.C:
-		rotten = true
+		t.Lock()
+		t.rotten = true
+		t.Unlock()
 		return nil, errTimeout
 	case res := <-resChan:
 		if res.Err != "" {
@@ -118,12 +119,15 @@ func PushAndGetResult(t Task, timeout time.Duration) (interface{}, error) {
 }
 
 // Shift returns task from the queue
-func Shift() (t Task) {
+func Shift() (t *Task) {
 	for {
 		t = <-shiftQueue
-		if t.rotten != nil && *(t.rotten) {
+		t.Lock()
+		if t.rotten {
+			t.Unlock()
 			continue
 		}
+		t.Unlock()
 		break
 	}
 	log.Debugf("Put task from queue. id: %d", t.ID)
@@ -131,9 +135,11 @@ func Shift() (t Task) {
 }
 
 // UnShift returns task to the queue
-func UnShift(t Task) {
+func UnShift(t *Task) {
 	log.Debugf("Return task to the queue. id: %d", t.ID)
-	if t.rotten != nil && *(t.rotten) {
+	t.Lock()
+	defer t.Unlock()
+	if t.rotten {
 		return
 	}
 	log.Debugf("Task returned to the queue. id: %d", t.ID)
@@ -163,9 +169,9 @@ func queuing() {
 }
 
 func init() {
-	mainQueue = make(chan Task, mainQueueLength)
-	extraQueue = make(chan Task, extraQueueLength)
-	shiftQueue = make(chan Task)
+	mainQueue = make(chan *Task, mainQueueLength)
+	extraQueue = make(chan *Task, extraQueueLength)
+	shiftQueue = make(chan *Task)
 	resultChans = make(map[uint64]chan Result)
 
 	go queuing()

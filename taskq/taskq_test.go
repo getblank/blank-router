@@ -29,7 +29,7 @@ func TestPushing(t *testing.T) {
 				time.Sleep(time.Millisecond * 200)
 				t := Shift()
 				g.Assert(t.Type).Equal("TEST2")
-				g.Assert(*(t.rotten)).Equal(true)
+				g.Assert(t.rotten).Equal(true)
 				g.Assert(len(shiftQueue)).Equal(0)
 				g.Assert(len(mainQueue)).Equal(0)
 				g.Assert(len(extraQueue)).Equal(0)

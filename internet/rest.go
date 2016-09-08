@@ -121,6 +121,7 @@ func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 			Arguments: map[string]interface{}{
 				"itemId":   c.Param("id"),
 				"actionId": actionID,
+				"request":  extractRequest(c),
 			},
 		}
 		if c.Request().ContentLength() != 0 {

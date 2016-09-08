@@ -179,13 +179,31 @@ func runServer() {
 	wampServer.SetSessionOpenCallback(internalOpenCallback)
 	wampServer.SetSessionCloseCallback(internalCloseCallback)
 
-	wampServer.RegisterRPCHandler(getTaskURI, taskGetHandler)
-	wampServer.RegisterRPCHandler(doneTaskURI, taskDoneHandler)
-	wampServer.RegisterRPCHandler(errorTaskURI, taskErrorHandler)
-	wampServer.RegisterRPCHandler(publishURI, publishHandler)
-	wampServer.RegisterRPCHandler(cronRunURI, cronRunHandler)
+	err := wampServer.RegisterRPCHandler(getTaskURI, taskGetHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = wampServer.RegisterRPCHandler(doneTaskURI, taskDoneHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = wampServer.RegisterRPCHandler(errorTaskURI, taskErrorHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = wampServer.RegisterRPCHandler(publishURI, publishHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = wampServer.RegisterRPCHandler(cronRunURI, cronRunHandler)
+	if err != nil {
+		panic(err)
+	}
 
-	wampServer.RegisterSubHandler(uriSubStores, subStoresHandler, nil, nil)
+	err = wampServer.RegisterSubHandler(uriSubStores, subStoresHandler, nil, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	s := new(websocket.Server)
 	s.Handshake = func(c *websocket.Config, r *http.Request) error {
@@ -196,7 +214,7 @@ func runServer() {
 	}
 	http.Handle("/", s)
 	log.Info("Will listen for connection on port ", listeningPort)
-	err := http.ListenAndServe(":"+listeningPort, nil)
+	err = http.ListenAndServe(":"+listeningPort, nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}

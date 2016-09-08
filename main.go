@@ -36,10 +36,6 @@ func main() {
 		if source == "" {
 			source = "blank-router"
 		}
-		facility := os.Getenv("GRAYLOG2_FACILITY")
-		if facility == "" {
-			facility = "BLANK"
-		}
 		hook := graylog.NewGraylogHook(host+":"+port, map[string]interface{}{"source-app": source})
 		log.AddHook(hook)
 	}

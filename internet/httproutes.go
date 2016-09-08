@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -26,7 +25,6 @@ import (
 
 var (
 	routesBuildingCompleted bool
-	routesMutex             sync.Mutex
 	apiV1baseURI            = "/api/v1/"
 	errUserIDNotFound       = errors.New("not found")
 )

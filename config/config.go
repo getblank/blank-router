@@ -74,21 +74,15 @@ func clone(c map[string]Store) map[string]Store {
 		}
 		if store.Actions != nil {
 			s.Actions = make([]Action, len(store.Actions))
-			for i, a := range store.Actions {
-				s.Actions[i] = a
-			}
+			copy(s.Actions, store.Actions)
 		}
 		if store.StoreActions != nil {
 			s.StoreActions = make([]Action, len(store.StoreActions))
-			for i, a := range store.StoreActions {
-				s.StoreActions[i] = a
-			}
+			copy(s.StoreActions, store.StoreActions)
 		}
 		if store.HTTPHooks != nil {
 			s.HTTPHooks = make([]HTTPHook, len(store.HTTPHooks))
-			for i, h := range store.HTTPHooks {
-				s.HTTPHooks[i] = h
-			}
+			copy(s.HTTPHooks, store.HTTPHooks)
 		}
 
 		res[storeName] = s

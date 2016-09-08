@@ -158,6 +158,7 @@ func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 		}
 		findQuery := map[string]interface{}{"query": query, "skip": 0, "take": 10}
 		if _skip := c.QueryParam("skip"); _skip != "" {
+			var skip int
 			skip, err := strconv.Atoi(_skip)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, err.Error())
@@ -165,6 +166,7 @@ func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 			findQuery["skip"] = skip
 		}
 		if _take := c.QueryParam("take"); _take != "" {
+			var take int
 			take, err := strconv.Atoi(_take)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, err.Error())

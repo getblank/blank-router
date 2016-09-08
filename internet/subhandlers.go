@@ -78,6 +78,3 @@ func unsubStoresHandler(c *wango.Conn, uri string, args ...interface{}) (interfa
 	return nil, intranet.DeleteSubscription(cred.apiKey, c.ID(), uri)
 }
 
-func pubConfigHandler(uri string, event interface{}, extra interface{}) (bool, interface{}) {
-	return true, nil
-}

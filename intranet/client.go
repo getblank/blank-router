@@ -110,10 +110,22 @@ func connectedToSR(w *wango.Wango) {
 	srClient = w
 	srLocker.Unlock()
 
-	srClient.Call("register", map[string]interface{}{"type": "taskQueue", "port": listeningPort})
-	srClient.Subscribe("events", srEventHandler)
-	srClient.Subscribe("config", configUpdateHandler)
-	srClient.Subscribe("registry", registryUpdateHandler)
+	_, err := srClient.Call("register", map[string]interface{}{"type": "taskQueue", "port": listeningPort})
+	if err != nil {
+		log.WithError(err).Error("can't register taskQueue in SR")
+	}
+	err = srClient.Subscribe("events", srEventHandler)
+	if err != nil {
+		log.WithError(err).Error("can't subscribe to events")
+	}
+	err = srClient.Subscribe("config", configUpdateHandler)
+	if err != nil {
+		log.WithError(err).Error("can't subscribe to config")
+	}
+	err = srClient.Subscribe("registry", registryUpdateHandler)
+	if err != nil {
+		log.WithError(err).Error("can't subscribe to registry")
+	}
 }
 
 func connectToSr() {

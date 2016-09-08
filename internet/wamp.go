@@ -40,22 +40,61 @@ func wampInit() *wango.Wango {
 	w.SetSessionOpenCallback(sessionOpenCallback)
 	w.SetSessionCloseCallback(sessionCloseCallback)
 
-	w.RegisterRPCHandler(uriSignIn, signInHandler)
-	w.RegisterRPCHandler(uriSignOut, signOutHandler)
-	w.RegisterRPCHandler(uriState, stateHandler)
-	w.RegisterRPCHandler(uriAction, actionHandler)
-	w.RegisterRPCHandler(rgxRPC.Regexp, rgxRPCHandler)
+	err := w.RegisterRPCHandler(uriSignIn, signInHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = w.RegisterRPCHandler(uriSignOut, signOutHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = w.RegisterRPCHandler(uriState, stateHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = w.RegisterRPCHandler(uriAction, actionHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = w.RegisterRPCHandler(rgxRPC.Regexp, rgxRPCHandler)
+	if err != nil {
+		panic(err)
+	}
 
-	w.RegisterRPCHandler("com.check-user", checkUserHandler)
+	err = w.RegisterRPCHandler("com.check-user", checkUserHandler)
+	if err != nil {
+		panic(err)
+	}
 
-	w.RegisterRPCHandler(uriSignUp, signUpHandler)
-	w.RegisterRPCHandler(uriPasswordResetRequest, passwordResetRequestHandler)
-	w.RegisterRPCHandler(uriResetPassword, resetPasswordHandler)
+	err = w.RegisterRPCHandler(uriSignUp, signUpHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = w.RegisterRPCHandler(uriPasswordResetRequest, passwordResetRequestHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = w.RegisterRPCHandler(uriResetPassword, resetPasswordHandler)
+	if err != nil {
+		panic(err)
+	}
 
-	w.RegisterSubHandler(uriSubUser, subUserHandler, nil, nil)
-	w.RegisterSubHandler(uriSubConfig, subConfigHandler, nil, nil)
-	w.RegisterRPCHandler(uriTime, timeHandler)
-	w.RegisterSubHandler(uriSubStores, subStoresHandler, unsubStoresHandler, nil)
+	err = w.RegisterSubHandler(uriSubUser, subUserHandler, nil, nil)
+	if err != nil {
+		panic(err)
+	}
+	err = w.RegisterSubHandler(uriSubConfig, subConfigHandler, nil, nil)
+	if err != nil {
+		panic(err)
+	}
+	err = w.RegisterRPCHandler(uriTime, timeHandler)
+	if err != nil {
+		panic(err)
+	}
+	err = w.RegisterSubHandler(uriSubStores, subStoresHandler, unsubStoresHandler, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	return w
 }

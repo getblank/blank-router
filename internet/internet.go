@@ -35,7 +35,16 @@ func Init(version string) {
 	e.Use(serverHeadersMiddleware(version))
 	e.Use(middleware.Recover())
 
-	e.GET("/*", assetsHandler)
+	assetsGroup := e.Group("/*", func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if c.Request().Method() != "GET" {
+				return c.String(http.StatusMethodNotAllowed, "Allow: GET")
+			}
+			return next(c)
+		}
+	})
+	assetsGroup.GET("/*", assetsHandler)
+
 	e.POST("/login", loginHandler, allowAnyOriginMiddleware())
 	e.POST("/logout", logoutHandler, allowAnyOriginMiddleware())
 	e.GET("/logout", logoutHandler, allowAnyOriginMiddleware())

@@ -38,6 +38,7 @@ func Init(version string) {
 	assetsGroup := e.Group("/*", func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if c.Request().Method() != "GET" {
+				c.Response().Header().Set("Allow", "GET")
 				return c.String(http.StatusMethodNotAllowed, "Allow: GET")
 			}
 			return next(c)

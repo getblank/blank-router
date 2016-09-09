@@ -193,7 +193,7 @@ func checkUserHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 			},
 		},
 	}
-	_res, err := taskq.PushAndGetResult(t, time.Second*5)
+	_res, err := taskq.PushAndGetResult(&t, time.Second*5)
 	if err != nil {
 		return "USER_NOT_FOUND", nil
 	}
@@ -227,7 +227,7 @@ func passwordResetRequestHandler(c *wango.Conn, uri string, args ...interface{})
 		Type:      taskq.PasswordResetRequest,
 		Arguments: arguments,
 	}
-	return taskq.PushAndGetResult(t, time.Second*30)
+	return taskq.PushAndGetResult(&t, time.Second*30)
 }
 
 func resetPasswordHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -242,7 +242,7 @@ func resetPasswordHandler(c *wango.Conn, uri string, args ...interface{}) (inter
 		Type:      taskq.PasswordReset,
 		Arguments: arguments,
 	}
-	return taskq.PushAndGetResult(t, time.Second*30)
+	return taskq.PushAndGetResult(&t, time.Second*30)
 }
 
 func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -272,7 +272,7 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 				"_id": userID,
 			},
 		}
-		res, err := taskq.PushAndGetResult(t, 0)
+		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +298,7 @@ func signInHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 			"password": args[1],
 		},
 	}
-	res, err := taskq.PushAndGetResult(t, 0)
+	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +357,7 @@ func signUpHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		Type:      taskq.SignUp,
 		Arguments: arguments,
 	}
-	res, err := taskq.PushAndGetResult(t, time.Second*10)
+	res, err := taskq.PushAndGetResult(&t, time.Second*10)
 	if err != nil {
 		return nil, err
 	}
@@ -400,15 +400,15 @@ func rgxRPCHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 		case "get":
 			t.Type = taskq.DbGet
 			t.Arguments = map[string]interface{}{"_id": args[0]}
-			return taskq.PushAndGetResult(t, time.Second*5)
+			return taskq.PushAndGetResult(&t, time.Second*5)
 		case "save":
 			t.Type = taskq.DbSet
 			t.Arguments = map[string]interface{}{"item": args[0]}
-			return taskq.PushAndGetResult(t, time.Second*5)
+			return taskq.PushAndGetResult(&t, time.Second*5)
 		case "delete":
 			t.Type = taskq.DbDelete
 			t.Arguments = map[string]interface{}{"_id": args[0]}
-			return taskq.PushAndGetResult(t, time.Second*5)
+			return taskq.PushAndGetResult(&t, time.Second*5)
 		case "push":
 			if len(args) < 3 {
 				return nil, berrors.ErrInvalidArguments
@@ -419,7 +419,7 @@ func rgxRPCHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 				"prop": args[1],
 				"data": args[2],
 			}
-			return taskq.PushAndGetResult(t, time.Second*5)
+			return taskq.PushAndGetResult(&t, time.Second*5)
 		case "load-refs":
 			if len(args) < 4 {
 				return nil, berrors.ErrInvalidArguments
@@ -431,13 +431,13 @@ func rgxRPCHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 				"selected": args[2],
 				"query":    args[3],
 			}
-			return taskq.PushAndGetResult(t, time.Second*5)
+			return taskq.PushAndGetResult(&t, time.Second*5)
 		case "find":
 			t.Type = taskq.DbFind
 			t.Arguments = map[string]interface{}{
 				"query": args[0],
 			}
-			return taskq.PushAndGetResult(t, time.Second*5)
+			return taskq.PushAndGetResult(&t, time.Second*5)
 		case "widget-data":
 			if len(args) < 3 {
 				return nil, berrors.ErrInvalidArguments
@@ -448,7 +448,7 @@ func rgxRPCHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 				"data":     args[1],
 				"itemId":   args[2],
 			}
-			return taskq.PushAndGetResult(t, 0)
+			return taskq.PushAndGetResult(&t, 0)
 		}
 	}
 	return nil, nil

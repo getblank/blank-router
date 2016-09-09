@@ -15,7 +15,7 @@ func TestPushing(t *testing.T) {
 				Type: "TEST",
 			}
 			now := time.Now()
-			res, err := PushAndGetResult(t, time.Second)
+			res, err := PushAndGetResult(&t, time.Second)
 			g.Assert(res).Equal(nil)
 			g.Assert(err).Equal(errTimeout)
 			dur := time.Now().Sub(now)
@@ -35,7 +35,7 @@ func TestPushing(t *testing.T) {
 				g.Assert(len(extraQueue)).Equal(0)
 			}()
 			now := time.Now()
-			res, err := PushAndGetResult(t, time.Millisecond*100)
+			res, err := PushAndGetResult(&t, time.Millisecond*100)
 			g.Assert(res).Equal(nil)
 			g.Assert(err).Equal(errTimeout)
 			dur := time.Now().Sub(now)

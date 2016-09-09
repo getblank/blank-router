@@ -93,8 +93,8 @@ func Push(t *Task) chan Result {
 // PushAndGetResult is the alternative way to push task. It returns result and error instead of channel
 // Second argument is a task timeout. If provided, when timeout reached and task will not completed yet,
 // error returns with nil result
-func PushAndGetResult(t Task, timeout time.Duration) (interface{}, error) {
-	resChan := Push(&t)
+func PushAndGetResult(t *Task, timeout time.Duration) (interface{}, error) {
+	resChan := Push(t)
 	if timeout == 0 {
 		res := <-resChan
 		if res.Err != "" {

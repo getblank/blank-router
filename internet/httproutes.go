@@ -93,7 +93,7 @@ func onConfigUpdate(c map[string]config.Store) {
 				if settings.DevMode {
 					timeout = time.Second * 10
 				}
-				_res, err := taskq.PushAndGetResult(t, timeout)
+				_res, err := taskq.PushAndGetResult(&t, timeout)
 				if err != nil {
 					return c.JSON(http.StatusSeeOther, err.Error())
 				}
@@ -173,7 +173,7 @@ func createHTTPActions(storeName string, actions []config.Action) {
 			if settings.DevMode {
 				timeout = time.Second * 10
 			}
-			_res, err := taskq.PushAndGetResult(t, timeout)
+			_res, err := taskq.PushAndGetResult(&t, timeout)
 			if err != nil {
 				return c.JSON(http.StatusSeeOther, err.Error())
 			}
@@ -316,7 +316,7 @@ func getFileHandler(storeName string) echo.HandlerFunc {
 			Store:     storeName,
 			Arguments: map[string]interface{}{"_id": fileID},
 		}
-		_, err = taskq.PushAndGetResult(t, time.Second*5)
+		_, err = taskq.PushAndGetResult(&t, time.Second*5)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
@@ -346,7 +346,7 @@ func postFileHandler(storeName string) echo.HandlerFunc {
 			Store:     storeName,
 			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID, "name": fileName}},
 		}
-		_, err = taskq.PushAndGetResult(t, time.Second*5)
+		_, err = taskq.PushAndGetResult(&t, time.Second*5)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
@@ -383,7 +383,7 @@ func deleteFileHandler(storeName string) echo.HandlerFunc {
 			Store:     storeName,
 			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID}},
 		}
-		_, err = taskq.PushAndGetResult(t, time.Second*5)
+		_, err = taskq.PushAndGetResult(&t, time.Second*5)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}

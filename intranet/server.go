@@ -161,7 +161,7 @@ func subStoresHandler(c *wango.Conn, _uri string, args ...interface{}) (interfac
 			"take":  1,
 		},
 	}
-	_res, err := taskq.PushAndGetResult(t, time.Second*10)
+	_res, err := taskq.PushAndGetResult(&t, time.Second*10)
 	if err != nil {
 		return nil, err
 	}

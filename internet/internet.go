@@ -81,7 +81,7 @@ func facebookLoginHandler(c echo.Context) error {
 			"redirectUrl": c.QueryParam("redirectUrl"),
 		},
 	}
-	res, err := taskq.PushAndGetResult(t, time.Second*10)
+	res, err := taskq.PushAndGetResult(&t, time.Second*10)
 	if err != nil {
 		return c.HTML(http.StatusSeeOther, err.Error())
 	}
@@ -131,7 +131,7 @@ func loginHandler(c echo.Context) error {
 			"password": password,
 		},
 	}
-	res, err := taskq.PushAndGetResult(t, time.Second*5)
+	res, err := taskq.PushAndGetResult(&t, time.Second*5)
 	if err != nil {
 		return c.JSON(http.StatusSeeOther, err.Error())
 	}
@@ -199,7 +199,7 @@ func registerHandler(c echo.Context) error {
 			t.Arguments[k] = v[0]
 		}
 	}
-	res, err := taskq.PushAndGetResult(t, time.Second*10)
+	res, err := taskq.PushAndGetResult(&t, time.Second*10)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

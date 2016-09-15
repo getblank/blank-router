@@ -51,58 +51,58 @@ func createRESTAPIForStore(store config.Store) {
 	baseURI := apiV1baseURI + store.Store
 	lowerBaseURI := strings.ToLower(baseURI)
 
-	e.GET(baseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware())
+	e.GET(baseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET all REST method %s", baseURI)
 	if baseURI != lowerBaseURI {
-		e.GET(lowerBaseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware())
+		e.GET(lowerBaseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET all REST method %s", lowerBaseURI)
 	}
 
-	e.POST(baseURI, restPostDocumentHandler(store.Store), allowAnyOriginMiddleware())
+	e.POST(baseURI, restPostDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST REST method %s", baseURI)
 	if baseURI != lowerBaseURI {
-		e.POST(lowerBaseURI, restPostDocumentHandler(store.Store), allowAnyOriginMiddleware())
+		e.POST(lowerBaseURI, restPostDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST REST method %s", lowerBaseURI)
 	}
 
 	itemURI := baseURI + "/:id"
 	lowerItemURI := lowerBaseURI + "/:id"
-	e.GET(itemURI, restGetDocumentHandler(store.Store), allowAnyOriginMiddleware())
+	e.GET(itemURI, restGetDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET REST method %s", itemURI)
 	if itemURI != lowerItemURI {
-		e.GET(lowerItemURI, restGetDocumentHandler(store.Store), allowAnyOriginMiddleware())
+		e.GET(lowerItemURI, restGetDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET REST method %s", lowerItemURI)
 	}
-	e.PUT(itemURI, restPutDocumentHandler(store.Store), allowAnyOriginMiddleware())
+	e.PUT(itemURI, restPutDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created PUT REST method %s", itemURI)
 	if itemURI != lowerItemURI {
-		e.PUT(lowerItemURI, restPutDocumentHandler(store.Store), allowAnyOriginMiddleware())
+		e.PUT(lowerItemURI, restPutDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created PUT REST method %s", lowerItemURI)
 	}
-	e.DELETE(itemURI, restDeleteDocumentHandler(store.Store), allowAnyOriginMiddleware())
+	e.DELETE(itemURI, restDeleteDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 	log.WithFields(log.Fields{"store": store.Store}).Infof("Created DELETE REST method %s", itemURI)
 	if itemURI != lowerItemURI {
-		e.DELETE(lowerItemURI, restDeleteDocumentHandler(store.Store), allowAnyOriginMiddleware())
+		e.DELETE(lowerItemURI, restDeleteDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created DELETE REST method %s", lowerItemURI)
 	}
 
 	for _, a := range store.Actions {
 		actionURI := itemURI + "/" + a.ID
 		lowerActionURI := lowerItemURI + "/" + a.ID
-		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware())
+		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST action REST method %s", actionURI)
 		if actionURI != lowerActionURI {
-			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware())
+			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 			log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST action REST method %s", lowerActionURI)
 		}
 	}
 	for _, a := range store.StoreActions {
 		actionURI := baseURI + "/" + a.ID
 		lowerActionURI := lowerBaseURI + "/" + a.ID
-		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware())
+		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST storeAction REST method %s", actionURI)
 		if actionURI != lowerActionURI {
-			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware())
+			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 			log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST storeAction REST method %s", lowerActionURI)
 		}
 	}
@@ -110,14 +110,20 @@ func createRESTAPIForStore(store config.Store) {
 
 func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
+		_cred := c.Get("cred")
+		if _cred == nil {
+			log.Warn("REST ACTION: no cred in echo context")
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		cred, ok := _cred.(credentials)
+		if !ok {
+			log.Warn("REST ACTION: invalid cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 		t := taskq.Task{
 			Type:   taskq.DbAction,
 			Store:  storeName,
-			UserID: userID,
+			UserID: cred.userID,
 			Arguments: map[string]interface{}{
 				"itemId":   c.Param("id"),
 				"actionId": actionID,
@@ -126,7 +132,7 @@ func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 		}
 		if c.Request().ContentLength() != 0 {
 			var data interface{}
-			err = c.Bind(&data)
+			err := c.Bind(&data)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, err.Error())
 			}
@@ -145,13 +151,19 @@ func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 
 func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
+		_cred := c.Get("cred")
+		if _cred == nil {
+			log.Warn("REST GETALL: no cred in echo context")
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		cred, ok := _cred.(credentials)
+		if !ok {
+			log.Warn("REST GETALL: invalid cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 		var query map[string]interface{}
 		if _query := c.QueryParam("query"); _query != "" {
-			err = json.Unmarshal([]byte(_query), &query)
+			err := json.Unmarshal([]byte(_query), &query)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, err.Error())
 			}
@@ -178,7 +190,7 @@ func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 		}
 		t := taskq.Task{
 			Type:   taskq.DbFind,
-			UserID: userID,
+			UserID: cred.userID,
 			Store:  storeName,
 			Arguments: map[string]interface{}{
 				"query": findQuery,
@@ -197,8 +209,14 @@ func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 
 func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
+		_cred := c.Get("cred")
+		if _cred == nil {
+			log.Warn("REST GET: no cred in echo context")
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		cred, ok := _cred.(credentials)
+		if !ok {
+			log.Warn("REST GET: invalid cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 		id := c.Param("id")
@@ -207,7 +225,7 @@ func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 		}
 		t := taskq.Task{
 			Type:   taskq.DbGet,
-			UserID: userID,
+			UserID: cred.userID,
 			Store:  storeName,
 			Arguments: map[string]interface{}{
 				"_id": id,
@@ -226,12 +244,18 @@ func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 
 func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
+		_cred := c.Get("cred")
+		if _cred == nil {
+			log.Warn("REST POST: no cred in echo context")
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		cred, ok := _cred.(credentials)
+		if !ok {
+			log.Warn("REST POST: invalid cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 		var item map[string]interface{}
-		err = c.Bind(&item)
+		err := c.Bind(&item)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
@@ -240,7 +264,7 @@ func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 		}
 		t := taskq.Task{
 			Type:   taskq.DbSet,
-			UserID: userID,
+			UserID: cred.userID,
 			Store:  storeName,
 			Arguments: map[string]interface{}{
 				"item": item,
@@ -250,7 +274,7 @@ func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(http.StatusSeeOther, err.Error())
 		}
-		item, ok := res.(map[string]interface{})
+		item, ok = res.(map[string]interface{})
 		if !ok {
 			return c.JSON(http.StatusInternalServerError, berrors.ErrError.Error())
 		}
@@ -260,8 +284,14 @@ func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 
 func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
+		_cred := c.Get("cred")
+		if _cred == nil {
+			log.Warn("REST PUT: no cred in echo context")
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		cred, ok := _cred.(credentials)
+		if !ok {
+			log.Warn("REST PUT: invalid cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 		id := c.Param("id")
@@ -269,14 +299,14 @@ func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
 		}
 		var item map[string]interface{}
-		err = c.Bind(&item)
+		err := c.Bind(&item)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 		item["_id"] = id
 		t := taskq.Task{
 			Type:   taskq.DbSet,
-			UserID: userID,
+			UserID: cred.userID,
 			Store:  storeName,
 			Arguments: map[string]interface{}{
 				"item": item,
@@ -292,8 +322,14 @@ func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 
 func restDeleteDocumentHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
+		_cred := c.Get("cred")
+		if _cred == nil {
+			log.Warn("REST DELETE: no cred in echo context")
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+		cred, ok := _cred.(credentials)
+		if !ok {
+			log.Warn("REST DELETE: invalid cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 		id := c.Param("id")
@@ -302,13 +338,13 @@ func restDeleteDocumentHandler(storeName string) echo.HandlerFunc {
 		}
 		t := taskq.Task{
 			Type:   taskq.DbDelete,
-			UserID: userID,
+			UserID: cred.userID,
 			Store:  storeName,
 			Arguments: map[string]interface{}{
 				"_id": id,
 			},
 		}
-		_, err = taskq.PushAndGetResult(&t, time.Second*30)
+		_, err := taskq.PushAndGetResult(&t, time.Second*30)
 		if err != nil {
 			if strings.EqualFold(err.Error(), "not found") {
 				return c.JSON(http.StatusNotFound, err.Error())

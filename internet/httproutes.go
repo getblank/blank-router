@@ -17,7 +17,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/getblank/blank-router/config"
-	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
 	"github.com/getblank/blank-router/taskq"
 	"github.com/getblank/uuid"
@@ -156,19 +155,21 @@ func createHTTPActions(storeName string, actions []config.Action) {
 		}
 		actionID := v.ID
 		group.GET(actionID, func(c echo.Context) error {
-			_userID := c.Get("userId")
-			if _userID == nil {
+			_cred := c.Get("cred")
+			if _cred == nil {
+				log.Warn("HTTP ACTION: no cred in echo context")
 				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 			}
-			userID, ok := _userID.(string)
+			cred, ok := _cred.(credentials)
 			if !ok {
+				log.Warn("HTTP ACTION: invalid cred in echo context")
 				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 			}
 
 			t := taskq.Task{
 				Store:  storeName,
 				Type:   taskq.DbAction,
-				UserID: userID,
+				UserID: cred.userID,
 				Arguments: map[string]interface{}{
 					"request":  extractRequest(c),
 					"actionId": actionID,
@@ -190,14 +191,6 @@ func createHTTPActions(storeName string, actions []config.Action) {
 		}, jwtAuthMiddleware(false))
 		log.Infof("Registered httpAction for store '%s' with path %s", storeName, groupURI+v.ID)
 	}
-}
-
-func getUserID(c echo.Context) (string, error) {
-	apiKey := c.QueryParam("key")
-	if apiKey == "" {
-		return "", errUserIDNotFound
-	}
-	return intranet.CheckSession(apiKey)
 }
 
 func extractRequest(c echo.Context) map[string]interface{} {
@@ -307,19 +300,21 @@ func parseResult(_res interface{}) (*result, error) {
 
 func getFileHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		_userID := c.Get("userId")
-		if _userID == nil {
+		_cred := c.Get("cred")
+		if _cred == nil {
+			log.Warn("FILES GET: no cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
-		userID, ok := _userID.(string)
+		cred, ok := _cred.(credentials)
 		if !ok {
+			log.Warn("FILES GET: invalid cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 
 		fileID := c.Param("id")
 		t := taskq.Task{
 			Type:      taskq.DbGet,
-			UserID:    userID,
+			UserID:    cred.userID,
 			Store:     storeName,
 			Arguments: map[string]interface{}{"_id": fileID},
 		}
@@ -334,12 +329,14 @@ func getFileHandler(storeName string) echo.HandlerFunc {
 
 func postFileHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		_userID := c.Get("userId")
-		if _userID == nil {
+		_cred := c.Get("cred")
+		if _cred == nil {
+			log.Warn("FILE POST: no cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
-		userID, ok := _userID.(string)
+		cred, ok := _cred.(credentials)
 		if !ok {
+			log.Warn("FILE POST: invalid cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 
@@ -354,7 +351,7 @@ func postFileHandler(storeName string) echo.HandlerFunc {
 		fileName := fileHeader.Filename
 		t := taskq.Task{
 			Type:      taskq.DbSet,
-			UserID:    userID,
+			UserID:    cred.userID,
 			Store:     storeName,
 			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID, "name": fileName}},
 		}
@@ -384,19 +381,21 @@ func postFileHandler(storeName string) echo.HandlerFunc {
 
 func deleteFileHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		_userID := c.Get("userId")
-		if _userID == nil {
+		_cred := c.Get("cred")
+		if _cred == nil {
+			log.Warn("FILES DELETE: no cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
-		userID, ok := _userID.(string)
+		cred, ok := _cred.(credentials)
 		if !ok {
+			log.Warn("FILES DELETE: invalid cred in echo context")
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 
 		fileID := c.Param("id")
 		t := taskq.Task{
 			Type:      taskq.DbDelete,
-			UserID:    userID,
+			UserID:    cred.userID,
 			Store:     storeName,
 			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID}},
 		}

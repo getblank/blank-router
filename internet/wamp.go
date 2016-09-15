@@ -106,27 +106,16 @@ func wampInit() *wango.Wango {
 }
 
 func wampHandler(c echo.Context) error {
-	_userID := c.Get("userId")
-	if _userID == nil {
-		log.Warn("WAMP no userId in echo context")
+	_cred := c.Get("cred")
+	if _cred == nil {
+		log.Warn("WAMP: no cred in echo context")
 		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 	}
-	userID, ok := _userID.(string)
+	cred, ok := _cred.(credentials)
 	if !ok {
-		log.Warn("WAMP userId is not a string")
+		log.Warn("WAMP: invalid cred in echo context")
 		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 	}
-	_apiKey := c.Get("apiKey")
-	if _apiKey == nil {
-		log.Warn("WAMP no apiKey in echo context")
-		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
-	}
-	apiKey, ok := _apiKey.(string)
-	if !ok {
-		log.Warn("WAMP apiKey is not a string")
-		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
-	}
-	cred := credentials{userID, apiKey}
 	return standard.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
 		wamp.WampHandler(ws, cred)
 	}))(c)

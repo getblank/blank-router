@@ -54,7 +54,7 @@ func Init(version string) {
 		publicKeyLocker.RLock()
 		defer publicKeyLocker.RUnlock()
 		return c.String(http.StatusOK, string(publicPemKey))
-	}, jwtAuthMiddleware(false))
+	})
 
 	e.POST("/login", loginHandler, allowAnyOriginMiddleware())
 	e.POST("/logout", logoutHandler, allowAnyOriginMiddleware())

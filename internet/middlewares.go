@@ -33,7 +33,7 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 			}
 			if accessToken == "" {
 				if allowGuests {
-					c.Set("userId", "guest")
+					c.Set("cred", credentials{userID: "guest"})
 					return next(c)
 				}
 				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
@@ -48,8 +48,7 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 				logger.Debug(err)
 				return c.JSON(http.StatusForbidden, ErrSessionNotFound.Error())
 			}
-			c.Set("apiKey", apiKey)
-			c.Set("userId", userID)
+			c.Set("cred", credentials{userID: userID, apiKey: apiKey})
 			return next(c)
 		}
 	}

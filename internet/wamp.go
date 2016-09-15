@@ -1,11 +1,16 @@
 package internet
 
 import (
+	"net/http"
 	"time"
+
+	"golang.org/x/net/websocket"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/getblank/rgx"
 	"github.com/getblank/wango"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/engine/standard"
 	"github.com/pkg/errors"
 
 	"github.com/getblank/blank-router/berrors"
@@ -33,6 +38,7 @@ const (
 var (
 	rgxRPC = rgx.New(`^com\.stores\.(?P<store>[a-zA-Z_]*).(?P<command>[a-z\-]*)$`)
 	w      = wango.New()
+	wamp   *wango.Wango
 )
 
 func wampInit() *wango.Wango {
@@ -97,6 +103,33 @@ func wampInit() *wango.Wango {
 	}
 
 	return w
+}
+
+func wampHandler(c echo.Context) error {
+	_userID := c.Get("userId")
+	if _userID == nil {
+		log.Warn("WAMP no userId in echo context")
+		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+	}
+	userID, ok := _userID.(string)
+	if !ok {
+		log.Warn("WAMP userId is not a string")
+		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+	}
+	_apiKey := c.Get("apiKey")
+	if _apiKey == nil {
+		log.Warn("WAMP no apiKey in echo context")
+		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+	}
+	apiKey, ok := _apiKey.(string)
+	if !ok {
+		log.Warn("WAMP apiKey is not a string")
+		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+	}
+	cred := credentials{userID, apiKey}
+	return standard.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
+		wamp.WampHandler(ws, cred)
+	}))(c)
 }
 
 func sessionOpenCallback(c *wango.Conn) {

@@ -121,15 +121,16 @@ func onConfigUpdate(c map[string]config.Store) {
 
 	routesBuildingCompleted = true
 	createRESTAPI(httpEnabledStores)
+	getPublicRSAKey()
 }
 
 func createFileHandlers(storeName string) {
 	groupURI := "/files/" + storeName
 	group := e.Group(groupURI)
-	group.GET("/:id", getFileHandler(storeName))
-	group.POST("/", postFileHandler(storeName))
-	group.POST("/:id", postFileHandler(storeName))
-	group.DELETE("/:id", deleteFileHandler(storeName))
+	group.GET("/:id", getFileHandler(storeName), jwtAuthMiddleware(true))
+	group.POST("/", postFileHandler(storeName), jwtAuthMiddleware(false))
+	group.POST("/:id", postFileHandler(storeName), jwtAuthMiddleware(false))
+	group.DELETE("/:id", deleteFileHandler(storeName), jwtAuthMiddleware(false))
 	log.Infof("Created handlers for fileStore '%s' with path %s:id", storeName, groupURI)
 }
 
@@ -155,8 +156,12 @@ func createHTTPActions(storeName string, actions []config.Action) {
 		}
 		actionID := v.ID
 		group.GET(actionID, func(c echo.Context) error {
-			userID, err := getUserID(c)
-			if err != nil {
+			_userID := c.Get("userId")
+			if _userID == nil {
+				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+			}
+			userID, ok := _userID.(string)
+			if !ok {
 				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 			}
 
@@ -182,7 +187,7 @@ func createHTTPActions(storeName string, actions []config.Action) {
 				return c.JSON(http.StatusInternalServerError, err.Error())
 			}
 			return defaultResponse(res, c)
-		})
+		}, jwtAuthMiddleware(false))
 		log.Infof("Registered httpAction for store '%s' with path %s", storeName, groupURI+v.ID)
 	}
 }
@@ -302,13 +307,15 @@ func parseResult(_res interface{}) (*result, error) {
 
 func getFileHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
-			if err != errUserIDNotFound {
-				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
-			}
-			userID = "guest"
+		_userID := c.Get("userId")
+		if _userID == nil {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
+		userID, ok := _userID.(string)
+		if !ok {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+
 		fileID := c.Param("id")
 		t := taskq.Task{
 			Type:      taskq.DbGet,
@@ -316,7 +323,7 @@ func getFileHandler(storeName string) echo.HandlerFunc {
 			Store:     storeName,
 			Arguments: map[string]interface{}{"_id": fileID},
 		}
-		_, err = taskq.PushAndGetResult(&t, time.Second*5)
+		_, err := taskq.PushAndGetResult(&t, time.Second*5)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
@@ -327,10 +334,15 @@ func getFileHandler(storeName string) echo.HandlerFunc {
 
 func postFileHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
+		_userID := c.Get("userId")
+		if _userID == nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
+		userID, ok := _userID.(string)
+		if !ok {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+
 		fileID := c.Param("id")
 		if fileID == "" {
 			fileID = uuid.NewV4()
@@ -372,10 +384,15 @@ func postFileHandler(storeName string) echo.HandlerFunc {
 
 func deleteFileHandler(storeName string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID, err := getUserID(c)
-		if err != nil {
+		_userID := c.Get("userId")
+		if _userID == nil {
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
+		userID, ok := _userID.(string)
+		if !ok {
+			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+		}
+
 		fileID := c.Param("id")
 		t := taskq.Task{
 			Type:      taskq.DbDelete,
@@ -383,7 +400,7 @@ func deleteFileHandler(storeName string) echo.HandlerFunc {
 			Store:     storeName,
 			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID}},
 		}
-		_, err = taskq.PushAndGetResult(&t, time.Second*5)
+		_, err := taskq.PushAndGetResult(&t, time.Second*5)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}

@@ -1,18 +1,19 @@
 package internet
 
 import (
+	"crypto/rsa"
 	"io"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
-	"golang.org/x/net/websocket"
 
 	"github.com/getblank/blank-router/berrors"
 	"github.com/getblank/blank-router/config"
@@ -24,6 +25,10 @@ import (
 var (
 	port = "8080"
 	e    = echo.New()
+
+	publicPemKey    []byte
+	publicRSAKey    *rsa.PublicKey
+	publicKeyLocker sync.RWMutex
 )
 
 // Init starts internet http server
@@ -45,6 +50,11 @@ func Init(version string) {
 		}
 	})
 	assetsGroup.GET("/*", assetsHandler)
+	e.GET("/public-key", func(c echo.Context) error {
+		publicKeyLocker.RLock()
+		defer publicKeyLocker.RUnlock()
+		return c.String(http.StatusOK, string(publicPemKey))
+	}, jwtAuthMiddleware(false))
 
 	e.POST("/login", loginHandler, allowAnyOriginMiddleware())
 	e.POST("/logout", logoutHandler, allowAnyOriginMiddleware())
@@ -53,10 +63,8 @@ func Init(version string) {
 
 	e.GET("/facebook-login", facebookLoginHandler)
 
-	wamp := wampInit()
-	e.GET("/wamp", standard.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
-		wamp.WampHandler(ws, nil)
-	})))
+	wamp = wampInit()
+	e.GET("/wamp", wampHandler, jwtAuthMiddleware(false))
 
 	e.GET("/common-settings", commonSettingsHandler)
 
@@ -147,14 +155,14 @@ func loginHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, berrors.ErrError.Error())
 	}
 
-	apiKey, err := intranet.NewSession(userID, user)
+	accessToken, err := intranet.NewSession(userID, user)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	result := map[string]interface{}{
-		"key":  apiKey,
-		"user": user,
+		"access_token": accessToken,
+		"user":         user,
 	}
 	return c.JSON(http.StatusOK, result)
 }

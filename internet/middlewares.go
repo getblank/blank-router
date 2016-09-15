@@ -1,15 +1,59 @@
 package internet
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
+	"github.com/ivahaev/go-logger"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
 )
+
+// ErrSessionNotFound error
+var ErrSessionNotFound = errors.New("session not found")
+
+func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			var accessToken string
+			if c.Request().Header().Contains("Authorization") {
+				authHeader := c.Request().Header().Get("Authorization")
+				if !strings.HasPrefix(authHeader, "Bearer ") {
+					return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+				}
+				accessToken = strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+			} else {
+				accessToken = c.QueryParam("access_token")
+			}
+			if accessToken == "" {
+				if allowGuests {
+					c.Set("userId", "guest")
+					return next(c)
+				}
+				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+			}
+
+			apiKey, userID, err := extractDataFromJWT(accessToken)
+			if err != nil {
+				return c.JSON(http.StatusForbidden, err.Error())
+			}
+			_, err = intranet.CheckSession(apiKey)
+			if err != nil {
+				logger.Debug(err)
+				return c.JSON(http.StatusForbidden, ErrSessionNotFound.Error())
+			}
+			c.Set("apiKey", apiKey)
+			c.Set("userId", userID)
+			return next(c)
+		}
+	}
+}
 
 func allowAnyOriginMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

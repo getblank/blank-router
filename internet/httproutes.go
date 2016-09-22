@@ -74,8 +74,8 @@ func onConfigUpdate(c map[string]config.Store) {
 			case "OPTIONS", "Options", "options":
 				handler = group.OPTIONS
 			default:
-				log.Error("UNKNOWN HTTP METHOD", hook)
-				continue
+				log.Warn("UNKNOWN HTTP METHOD. Will use GET method ", hook)
+				handler = group.GET
 			}
 			hookIndex := i
 			handler(hook.URI, func(c echo.Context) error {

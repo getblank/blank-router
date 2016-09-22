@@ -63,8 +63,8 @@ func Init(version string) {
 
 	e.GET("/facebook-login", facebookLoginHandler)
 
-	e.GET("/check-jwt", checkJWTHandler, jwtAuthMiddleware(true))
-	e.POST("/check-jwt", checkJWTHandler, jwtAuthMiddleware(true))
+	e.GET("/check-jwt", checkJWTHandler)
+	e.POST("/check-jwt", checkJWTHandler)
 
 	wamp = wampInit()
 	e.GET("/wamp", wampHandler, jwtAuthMiddleware(false))
@@ -85,9 +85,13 @@ func Init(version string) {
 }
 
 func checkJWTHandler(c echo.Context) error {
-	var res = map[string]interface{}{"valid": false}
-	if c.Get("cred") != nil {
-		res["valid"] = true
+	res := map[string]interface{}{"valid": false}
+	if token := extractToken(c); token != "" {
+		if apiKey, _, err := extractDataFromJWT(token); err == nil {
+			if _, err = intranet.CheckSession(apiKey); err == nil {
+				res["valid"] = true
+			}
+		}
 	}
 	return c.JSON(http.StatusOK, res)
 }

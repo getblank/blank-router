@@ -110,3 +110,16 @@ func serverHeadersMiddleware(version string) echo.MiddlewareFunc {
 		}
 	}
 }
+
+func extractToken(c echo.Context) string {
+	var accessToken string
+	if c.Request().Header().Contains("Authorization") {
+		authHeader := c.Request().Header().Get("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			accessToken = strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+		}
+	} else {
+		accessToken = c.QueryParam("access_token")
+	}
+	return accessToken
+}

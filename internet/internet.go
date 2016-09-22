@@ -63,6 +63,9 @@ func Init(version string) {
 
 	e.GET("/facebook-login", facebookLoginHandler)
 
+	e.GET("/check-jwt", checkJWTHandler, jwtAuthMiddleware(true))
+	e.POST("/check-jwt", checkJWTHandler, jwtAuthMiddleware(true))
+
 	wamp = wampInit()
 	e.GET("/wamp", wampHandler, jwtAuthMiddleware(false))
 
@@ -79,6 +82,14 @@ func Init(version string) {
 	}
 	log.Info("Starting internet server on port ", port)
 	e.Run(standard.New(":" + port))
+}
+
+func checkJWTHandler(c echo.Context) error {
+	var res = map[string]interface{}{"valid": false}
+	if c.Get("cred") != nil {
+		res["valid"] = true
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 func facebookLoginHandler(c echo.Context) error {

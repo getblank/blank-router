@@ -2,20 +2,29 @@ language: go
 os:
   - linux
 go:
-  - 1.7
-before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq upx
+  - 1.7.1
 script:
   - go get -t -v ./...
   - go test ./...
 after_success:
   - go build -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
-  - upx --best blank-router
   - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-linux/blank-router
   - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/linux/blank-router
 
   - GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
-  # - upx --best blank-router
   - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/$(date +%Y-%m-%d_%H:%M)-osx/blank-router
   - curl --ftp-create-dirs --data-binary -k -T ./blank-router -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/osx/blank-router
+
+before_deploy:
+  - go build -o blank-router-linux -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
+  - GOOS=darwin GOARCH=amd64 go build -o blank-router-macos -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
+
+deploy:
+  provider: releases
+  api_key: "$GITHUB_OAUTH_TOKEN"
+  file:
+    - "blank-router-linux"
+    - "blank-router-macos"
+  skip_cleanup: true
+  on:
+    tags: true

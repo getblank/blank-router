@@ -29,6 +29,9 @@ func getPublicRSAKey() {
 	defer publicKeyLocker.Unlock()
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, res.Body)
+	if err != nil {
+		panic(err)
+	}
 
 	publicRSAKey, err = jwt.ParseRSAPublicKeyFromPEM(buf.Bytes())
 	if err != nil {

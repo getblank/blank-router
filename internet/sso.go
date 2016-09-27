@@ -14,7 +14,7 @@ var ssoHTML = `
     <html lang="en">
         <head>
             <script type="text/javascript">
-                var src, origin, allowed = ["%s"];
+                var src, origin, allowed = [%s];
                 function receiveMessage(event) {
                     if (allowed.indexOf(event.origin) < 0) { return; }
                     if (event.data === "remove") {
@@ -42,7 +42,10 @@ var ssoHTML = `
 
 func ssoFrameHandler(c echo.Context) error {
 	ssoOrigins := config.GetSSOOrigins()
-	origins := strings.Join(ssoOrigins, `", "`)
+	var origins string
+	if len(ssoOrigins) > 0 {
+		origins = `"` + strings.Join(ssoOrigins, `", "`) + `"`
+	}
 	res := fmt.Sprintf(ssoHTML, origins)
 	return c.HTML(http.StatusOK, res)
 }

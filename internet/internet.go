@@ -66,6 +66,8 @@ func Init(version string) {
 	e.GET("/check-jwt", checkJWTHandler)
 	e.POST("/check-jwt", checkJWTHandler)
 
+	e.Get("/sso-frame", ssoFrameHandler, allowAnyOriginMiddleware())
+
 	wamp = wampInit()
 	e.GET("/wamp", wampHandler, jwtAuthMiddleware(false))
 

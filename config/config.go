@@ -1,23 +1,30 @@
 package config
 
-import "sync"
+import (
+	"encoding/json"
+	"sync"
+
+	log "github.com/Sirupsen/logrus"
+)
 
 var (
 	conf            = map[string]Store{}
+	serverSettings  = ServerSettings{}
 	locker          sync.RWMutex
 	onUpdateHandler func(map[string]Store)
 )
 
 // Store is a small representation of store in config
 type Store struct {
-	Store          string      `json:"store"` // just name of the store
-	Type           string      `json:"type"`
-	Props          interface{} `json:"props"` // just dummy for props needed when HTTPAPI enabled
-	Actions        []Action    `json:"actions,omitempty"`
-	StoreActions   []Action    `json:"storeActions,omitempty"`
-	HTTPHooks      []HTTPHook  `json:"httpHooks,omitempty"`
-	HTTPAPI        bool        `json:"httpApi,omitempty"`
-	StoreLifeCycle Hooks       `json:"storeLifeCycle,omitempty"`
+	Store          string                 `json:"store"` // just name of the store
+	Type           string                 `json:"type"`
+	Props          interface{}            `json:"props"` // just dummy for props needed when HTTPAPI enabled
+	Actions        []Action               `json:"actions,omitempty"`
+	StoreActions   []Action               `json:"storeActions,omitempty"`
+	HTTPHooks      []HTTPHook             `json:"httpHooks,omitempty"`
+	HTTPAPI        bool                   `json:"httpApi,omitempty"`
+	StoreLifeCycle Hooks                  `json:"storeLifeCycle,omitempty"`
+	Entries        map[string]interface{} `json:"entries,omitempty"`
 }
 
 // Action  is a small representation of action in config
@@ -47,6 +54,22 @@ type Hooks struct {
 	DidStart   string `json:"didStart,omitempty"`
 }
 
+// ServerSettings used to hold several server settings
+type ServerSettings struct {
+	SSOOrigins []string `json:"ssoOrigins,omitempty"`
+}
+
+// GetSSOOrigins returns configured SSO origins
+func GetSSOOrigins() []string {
+	locker.Lock()
+	defer locker.Unlock()
+	res := make([]string, len(serverSettings.SSOOrigins))
+	for i := range serverSettings.SSOOrigins {
+		res[i] = serverSettings.SSOOrigins[i]
+	}
+	return res
+}
+
 // Update stores new config
 func Update(c map[string]Store) {
 	locker.Lock()
@@ -54,6 +77,20 @@ func Update(c map[string]Store) {
 	conf = clone(c)
 	if onUpdateHandler != nil {
 		onUpdateHandler(clone(c))
+	}
+	if s, ok := conf["_serverSettings"]; ok {
+		encoded, err := json.Marshal(s.Entries)
+		if err != nil {
+			log.Error("Can't marshal server settings", err)
+			return
+		}
+		se := ServerSettings{}
+		err = json.Unmarshal(encoded, &se)
+		if err != nil {
+			log.Error("Can't unmarshal server settings", err)
+			return
+		}
+		serverSettings = se
 	}
 }
 
@@ -71,6 +108,7 @@ func clone(c map[string]Store) map[string]Store {
 			Type:    store.Type,
 			HTTPAPI: store.HTTPAPI,
 			Props:   store.Props,
+			Entries: map[string]interface{}{},
 		}
 		if store.Actions != nil {
 			s.Actions = make([]Action, len(store.Actions))
@@ -83,6 +121,9 @@ func clone(c map[string]Store) map[string]Store {
 		if store.HTTPHooks != nil {
 			s.HTTPHooks = make([]HTTPHook, len(store.HTTPHooks))
 			copy(s.HTTPHooks, store.HTTPHooks)
+		}
+		for k, v := range store.Entries {
+			s.Entries[k] = v
 		}
 
 		res[storeName] = s

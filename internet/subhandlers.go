@@ -21,7 +21,18 @@ func subUserHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 		log.WithField("extra", extra).Warn("Invalid type of extra on connection when sub com.user handler")
 		return nil, berrors.ErrError
 	}
-	return nil, intranet.AddSubscription(cred.apiKey, c.ID(), uri, nil)
+	t := taskq.Task{
+		Type:      taskq.DbGet,
+		Store:     "users",
+		UserID:    cred.userID,
+		Arguments: map[string]interface{}{"_id": cred.userID},
+	}
+	res, err := taskq.PushAndGetResult(&t, 0)
+	if err != nil {
+		return nil, err
+	}
+	res = map[string]interface{}{"user": res}
+	return res, intranet.AddSubscription(cred.apiKey, c.ID(), uri, nil)
 }
 
 func subConfigHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {

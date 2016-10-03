@@ -87,8 +87,8 @@ func Init(version string) {
 }
 
 func checkJWTOptionsHandler(c echo.Context) error {
-	c.Response().Header().Set("Access-Control-Request-Method", "GET, POST")
-	c.Response().Header().Set("Access-Control-Request-Headers", "Authorization, Content-Type")
+	c.Response().Header().Set("Access-Control-Allow-Method", "GET, POST")
+	c.Response().Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 	return nil
 }
 

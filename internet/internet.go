@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
@@ -63,8 +62,9 @@ func Init(version string) {
 
 	e.GET("/facebook-login", facebookLoginHandler)
 
-	e.GET("/check-jwt", checkJWTHandler)
-	e.POST("/check-jwt", checkJWTHandler)
+	e.GET("/check-jwt", checkJWTHandler, allowAnyOriginMiddleware())
+	e.POST("/check-jwt", checkJWTHandler, allowAnyOriginMiddleware())
+	e.OPTIONS("/check-jwt", checkJWTOptionsHandler, allowAnyOriginMiddleware())
 
 	e.Get("/sso-frame", ssoFrameHandler, allowAnyOriginMiddleware())
 
@@ -84,6 +84,12 @@ func Init(version string) {
 	}
 	log.Info("Starting internet server on port ", port)
 	e.Run(standard.New(":" + port))
+}
+
+func checkJWTOptionsHandler(c echo.Context) error {
+	c.Response().Header().Set("Access-Control-Request-Method", "GET, POST")
+	c.Response().Header().Set("Access-Control-Request-Headers", "Authorization, Content-Type")
+	return nil
 }
 
 func checkJWTHandler(c echo.Context) error {
@@ -254,7 +260,7 @@ func commonSettingsHandler(c echo.Context) error {
 }
 
 func assetsHandler(c echo.Context) error {
-	var uri = "/assets" + strings.Split(c.Request().URI(), "?")[0]
+	var uri = "/assets" + c.Request().URL().Path()
 	if uri == "/assets/" {
 		uri = "/assets/blank/index.html"
 	}

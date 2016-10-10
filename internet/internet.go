@@ -135,7 +135,7 @@ func facebookLoginHandler(c echo.Context) error {
 
 	result := `<script>
 		(function(){
-			localStorage.setItem("tempKey", "` + apiKey + `");
+			localStorage.setItem("blank-access-token", "` + apiKey + `");
 			var redirectUrl = location.search.match(/redirectUrl=([^&]*)&?/);
 			if (redirectUrl) {
 				window.location = decodeURIComponent(redirectUrl[1]);

@@ -264,6 +264,9 @@ func assetsHandler(c echo.Context) error {
 	if uri == "/assets/" {
 		uri = "/assets/blank/index.html"
 	}
+	if len(path.Ext(uri)) == 0 {
+		uri += "/index.html"
+	}
 	res, err := http.Get(settings.SRHTTPAddress + uri)
 	if err != nil {
 		c.Response().WriteHeader(http.StatusNotFound)

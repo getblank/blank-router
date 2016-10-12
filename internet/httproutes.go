@@ -22,9 +22,10 @@ import (
 	"github.com/getblank/uuid"
 )
 
+const apiV1baseURI = "/api/v1/"
+
 var (
 	routesBuildingCompleted bool
-	apiV1baseURI            = "/api/v1/"
 	errUserIDNotFound       = errors.New("not found")
 )
 

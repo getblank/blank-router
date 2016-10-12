@@ -37,7 +37,7 @@ func createRESTAPI(httpEnabledStores []config.Store) {
 			log.WithField("html", res).Error("Invalid response type from doc compiler")
 			return
 		}
-		e.GET(apiV1baseURI, func(c echo.Context) error {
+		e.GET(apiV1baseURI[:len(apiV1baseURI)-1], func(c echo.Context) error {
 			return c.HTML(http.StatusOK, html)
 		})
 		log.Info("REST API Documentation generated")

@@ -280,6 +280,7 @@ func defaultResponse(res *result, c echo.Context) error {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, "can't decode file")
 		}
+		c.Response().Header().Set(echo.HeaderContentDisposition, "attachment; filename="+res.FileName)
 		return c.ServeContent(bytes.NewReader(buffer), res.FileName, time.Now())
 	default:
 		return c.JSON(http.StatusSeeOther, "unknown encoding type")

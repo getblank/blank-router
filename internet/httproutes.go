@@ -42,6 +42,7 @@ type result struct {
 
 func onConfigUpdate(c map[string]config.Store) {
 	w.Disconnect()
+	log.Info("New config arrived")
 	if routesBuildingCompleted {
 		log.Warn("Routes already built. Need to restart if http hooks or actions modified.")
 	}
@@ -120,8 +121,14 @@ func onConfigUpdate(c map[string]config.Store) {
 	}
 
 	routesBuildingCompleted = true
+	log.Info("Routes building complete")
+
 	createRESTAPI(httpEnabledStores)
-	getPublicRSAKey()
+		log.Info("REST API building complete")
+
+getPublicRSAKey()
+	log.Info("RSA keys received")
+
 }
 
 func createFileHandlers(storeName string) {

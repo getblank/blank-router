@@ -39,10 +39,13 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 				return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 			}
 
+			publicKeyLocker.Lock()
 			if publicRSAKey == nil {
+				publicKeyLocker.Unlock()
 				log.Warn("JWT is not ready yet")
 				return c.JSON(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
 			}
+			publicKeyLocker.Unlock()
 
 			apiKey, userID, err := extractDataFromJWT(accessToken)
 			if err != nil {

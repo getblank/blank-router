@@ -124,9 +124,9 @@ func onConfigUpdate(c map[string]config.Store) {
 	log.Info("Routes building complete")
 
 	createRESTAPI(httpEnabledStores)
-		log.Info("REST API building complete")
+	log.Info("REST API building complete")
 
-getPublicRSAKey()
+	getPublicRSAKey()
 	log.Info("RSA keys received")
 
 }

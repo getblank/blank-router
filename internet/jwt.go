@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/dgrijalva/jwt-go"
+
 	"github.com/getblank/blank-router/settings"
 )
 
@@ -19,12 +20,15 @@ type blankClaims struct {
 }
 
 func getPublicRSAKey() {
+	publicKeyURI := settings.SRHTTPAddress + "/public-key"
+	log.Infof("Try to load public RSA key from '%s'", publicKeyURI)
 	res, err := http.Get(settings.SRHTTPAddress + "/public-key")
 	if err != nil {
 		log.Fatal("Can't get public RSA key")
 		panic(err)
 	}
 	defer res.Body.Close()
+	log.Infof("Public RSA key received from '%s'", publicKeyURI)
 	publicKeyLocker.Lock()
 	defer publicKeyLocker.Unlock()
 	buf := new(bytes.Buffer)

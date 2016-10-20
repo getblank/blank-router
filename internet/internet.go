@@ -94,6 +94,13 @@ func checkJWTOptionsHandler(c echo.Context) error {
 
 func checkJWTHandler(c echo.Context) error {
 	res := map[string]interface{}{"valid": false}
+	publicKeyLocker.Lock()
+	if publicRSAKey == nil {
+		publicKeyLocker.Unlock()
+		log.Warn("JWT is not ready yet")
+		return c.JSON(http.StatusOK, res)
+	}
+	publicKeyLocker.Unlock()
 	if token := extractToken(c); token != "" {
 		if apiKey, _, err := extractDataFromJWT(token); err == nil {
 			if _, err = intranet.CheckSession(apiKey); err == nil {

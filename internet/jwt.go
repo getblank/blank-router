@@ -63,7 +63,7 @@ func jwtChecker(t *jwt.Token) (interface{}, error) {
 func extractDataFromJWT(token string) (apiKey, userID string, err error) {
 	claims := new(blankClaims)
 	publicKeyLocker.Lock()
+	defer publicKeyLocker.Unlock()
 	_, err = jwt.ParseWithClaims(token, claims, jwtChecker)
-	publicKeyLocker.Unlock()
 	return claims.SessionID, claims.UserID, err
 }

@@ -43,7 +43,8 @@ var (
 
 	sequence uint64
 
-	errTimeout = errors.New("Timeout")
+	// ErrTimeout is a timeout error for tasks
+	ErrTimeout = errors.New("timeout")
 )
 
 // Result is a struct for result of task
@@ -90,7 +91,7 @@ func Push(t *Task) chan Result {
 	return ch
 }
 
-// PushAndGetResult is the alternative way to push task. It returns result and error instead of channel
+// PushAndGetResult is the alternative way to push task. It returns result and error instead of channel.
 // Second argument is a task timeout. If provided, when timeout reached and task will not completed yet,
 // error returns with nil result
 func PushAndGetResult(t *Task, timeout time.Duration) (interface{}, error) {
@@ -109,7 +110,7 @@ func PushAndGetResult(t *Task, timeout time.Duration) (interface{}, error) {
 		t.Lock()
 		t.rotten = true
 		t.Unlock()
-		return nil, errTimeout
+		return nil, ErrTimeout
 	case res := <-resChan:
 		if res.Err != "" {
 			return nil, errors.New(res.Err)

@@ -29,12 +29,15 @@ var (
 )
 
 func taskGetHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+	log.Debugf("Get task request from client \"%s\"", c.ID())
 	t := taskq.Shift()
+	log.Debugf("Shifted task id: \"%d\" type: \"%s\" for client \"%s\"", t.ID, t.Type, c.ID())
 	if c.Connected() {
 		return t, nil
 	}
 
 	taskq.UnShift(t)
+	log.Debugf("Shifted task id: \"%d\" type: \"%s\" returned to the queue because client \"%s\" already disconnected", t.ID, t.Type, c.ID())
 	return nil, nil
 }
 
@@ -48,6 +51,7 @@ func taskDoneHandler(c *wango.Conn, uri string, args ...interface{}) (interface{
 		log.WithField("taskId", args[0]).Warn("Invalid task.id in task.done RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+	log.Debugf("Task done id: \"%d\" from client \"%s\"", int(id), c.ID())
 
 	result := taskq.Result{
 		ID:     uint64(id),
@@ -72,6 +76,7 @@ func taskErrorHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		log.WithField("error", args[1]).Warn("Invalid description in task.error RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+	log.Debugf("Task error id: \"%d\" err: \"%s\" from client \"%s\"", int(id), err, c.ID())
 	result := taskq.Result{
 		ID:  uint64(id),
 		Err: err,

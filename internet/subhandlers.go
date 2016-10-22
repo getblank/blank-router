@@ -1,7 +1,7 @@
 package internet
 
 import (
-	"errors"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -47,14 +47,12 @@ func subConfigHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		Type:   taskq.UserConfig,
 		UserID: cred.userID,
 	}
-	resChan := taskq.Push(&t)
-
-	res := <-resChan
-	if res.Err != "" {
-		return nil, errors.New(res.Err)
+	res, err := taskq.PushAndGetResult(&t, time.Second*5)
+	if err != nil {
+		return nil, err
 	}
 
-	return res.Result, nil
+	return res, nil
 }
 
 func subStoresHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {

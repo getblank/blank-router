@@ -47,7 +47,9 @@ func subConfigHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		Type:   taskq.UserConfig,
 		UserID: cred.userID,
 	}
+	log.Debugf("Config request received for client: \"%s\"", c.ID())
 	res, err := taskq.PushAndGetResult(&t, time.Second*5)
+	log.Debugf("Config request completed for client: \"%s\"", c.ID())
 	if err != nil {
 		return nil, err
 	}

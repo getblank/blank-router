@@ -39,9 +39,12 @@ var (
 	rgxRPC = rgx.New(`^com\.stores\.(?P<store>[a-zA-Z_]*).(?P<command>[a-z\-]*)$`)
 	w      = wango.New()
 	wamp   *wango.Wango
+
+	errUnknownMethod = errors.New("method unknown")
 )
 
 func wampInit() *wango.Wango {
+	wango.DebugMode()
 	w.StringMode()
 	w.SetSessionOpenCallback(sessionOpenCallback)
 	w.SetSessionCloseCallback(sessionCloseCallback)
@@ -67,7 +70,7 @@ func wampInit() *wango.Wango {
 		panic(err)
 	}
 
-	err = w.RegisterRPCHandler("com.check-user", checkUserHandler)
+	err = w.RegisterRPCHandler("com.check-user", checkUserWAMPHandler)
 	if err != nil {
 		panic(err)
 	}
@@ -198,7 +201,7 @@ func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 	return res.Result, nil
 }
 
-func checkUserHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
+func checkUserWAMPHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
 	if len(args) == 0 {
 		return nil, berrors.ErrInvalidArguments
 	}
@@ -473,5 +476,5 @@ func rgxRPCHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 			return taskq.PushAndGetResult(&t, 0)
 		}
 	}
-	return nil, nil
+	return nil, errUnknownMethod
 }

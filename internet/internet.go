@@ -59,6 +59,7 @@ func Init(version string) {
 	e.POST("/logout", logoutHandler, allowAnyOriginMiddleware())
 	e.GET("/logout", logoutHandler, allowAnyOriginMiddleware())
 	e.POST("/register", registerHandler, allowAnyOriginMiddleware())
+	e.POST("/check-user", checkUserHTTPHandler, allowAnyOriginMiddleware())
 
 	e.GET("/facebook-login", facebookLoginHandler)
 
@@ -243,6 +244,47 @@ func registerHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 	return c.JSON(http.StatusOK, res)
+}
+
+func checkUserHTTPHandler(c echo.Context) error {
+	email := c.FormValue("email")
+	if email == "" {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
+	}
+
+	t := taskq.Task{
+		Type:   taskq.DbFind,
+		UserID: "root",
+		Store:  "users",
+		Arguments: map[string]interface{}{
+			"query": map[string]interface{}{
+				"query": map[string]interface{}{
+					"email": email,
+				},
+				"props": []string{"_id"},
+			},
+		},
+	}
+	_res, err := taskq.PushAndGetResult(&t, time.Second*5)
+	if err != nil {
+		return c.JSON(http.StatusOK, "USER_NOT_FOUND")
+	}
+	res, ok := _res.(map[string]interface{})
+	if !ok {
+		return c.JSON(http.StatusInternalServerError, berrors.ErrError)
+	}
+	_items, ok := res["items"]
+	if !ok {
+		return c.JSON(http.StatusInternalServerError, berrors.ErrError)
+	}
+	items, ok := _items.([]interface{})
+	if !ok {
+		return c.JSON(http.StatusInternalServerError, berrors.ErrError)
+	}
+	if len(items) > 0 {
+		return c.JSON(http.StatusOK, "USER_EXISTS")
+	}
+	return c.JSON(http.StatusOK, "USER_NOT_FOUND")
 }
 
 func commonSettingsHandler(c echo.Context) error {

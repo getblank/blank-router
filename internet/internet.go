@@ -60,6 +60,8 @@ func Init(version string) {
 	e.GET("/logout", logoutHandler, allowAnyOriginMiddleware())
 	e.POST("/register", registerHandler, allowAnyOriginMiddleware())
 	e.POST("/check-user", checkUserHTTPHandler, allowAnyOriginMiddleware())
+	e.POST("/send-reset-link", checkUserHTTPHandler, allowAnyOriginMiddleware())
+	e.POST("/reset-password", checkUserHTTPHandler, allowAnyOriginMiddleware())
 
 	e.GET("/facebook-login", facebookLoginHandler)
 
@@ -285,6 +287,50 @@ func checkUserHTTPHandler(c echo.Context) error {
 		return c.JSON(http.StatusOK, "USER_EXISTS")
 	}
 	return c.JSON(http.StatusOK, "USER_NOT_FOUND")
+}
+
+func sendResetLinkHTTPHandler(c echo.Context) error {
+	email := c.FormValue("email")
+	if email == "" {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
+	}
+
+	t := taskq.Task{
+		Type: taskq.PasswordResetRequest,
+		Arguments: map[string]interface{}{
+			"email": email,
+		},
+	}
+	res, err := taskq.PushAndGetResult(&t, time.Second*30)
+	if err != nil {
+		return c.JSON(http.StatusSeeOther, err.Error())
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func resetPasswordHTTPHandler(c echo.Context) error {
+	token := c.FormValue("token")
+	if token == "" {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
+	}
+	password := c.FormValue("password")
+	if password == "" {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
+	}
+
+	t := taskq.Task{
+		Type: taskq.PasswordReset,
+		Arguments: map[string]interface{}{
+			"token":    token,
+			"password": password,
+		},
+	}
+	res, err := taskq.PushAndGetResult(&t, time.Second*30)
+	if err != nil {
+		return c.JSON(http.StatusSeeOther, err.Error())
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 
 func commonSettingsHandler(c echo.Context) error {

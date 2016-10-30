@@ -47,7 +47,7 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 			}
 			publicKeyLocker.Unlock()
 
-			apiKey, userID, err := extractDataFromJWT(accessToken)
+			apiKey, userID, err := extractAPIKeyAndUserIDromJWT(accessToken)
 			if err != nil {
 				return c.JSON(http.StatusForbidden, err.Error())
 			}

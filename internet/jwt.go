@@ -60,10 +60,15 @@ func jwtChecker(t *jwt.Token) (interface{}, error) {
 	return publicRSAKey, nil
 }
 
-func extractDataFromJWT(token string) (apiKey, userID string, err error) {
-	claims := new(blankClaims)
+func extractAPIKeyAndUserIDromJWT(token string) (apiKey, userID string, err error) {
+	claims, err := extractClaimsFromJWT(token)
+	return claims.SessionID, claims.UserID, err
+}
+
+func extractClaimsFromJWT(token string) (claims *blankClaims, err error) {
+	claims = new(blankClaims)
 	publicKeyLocker.Lock()
 	defer publicKeyLocker.Unlock()
 	_, err = jwt.ParseWithClaims(token, claims, jwtChecker)
-	return claims.SessionID, claims.UserID, err
+	return claims, err
 }

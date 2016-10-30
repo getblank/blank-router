@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"sync"
 	"time"
 
@@ -105,7 +106,7 @@ func checkJWTHandler(c echo.Context) error {
 	}
 	publicKeyLocker.Unlock()
 	if token := extractToken(c); token != "" {
-		if apiKey, _, err := extractDataFromJWT(token); err == nil {
+		if apiKey, _, err := extractAPIKeyAndUserIDromJWT(token); err == nil {
 			if _, err = intranet.CheckSession(apiKey); err == nil {
 				res["valid"] = true
 			}
@@ -143,15 +144,41 @@ func facebookLoginHandler(c echo.Context) error {
 		return c.HTML(http.StatusInternalServerError, err.Error())
 	}
 
+	claims, err := extractClaimsFromJWT(apiKey)
+	if err != nil {
+		log.Warnf("Can't parse JWT error: '%s', token: '%s'", err.Error(), apiKey)
+	}
+
+	expiresAt := strconv.Itoa(int(claims.ExpiresAt))
+
 	result := `<script>
 		(function(){
 			localStorage.setItem("blank-access-token", "` + apiKey + `");
+			createCookie("blank-token", "` + apiKey + `", ` + expiresAt + `);
 			var redirectUrl = location.search.match(/redirectUrl=([^&]*)&?/);
 			if (redirectUrl) {
 				window.location = decodeURIComponent(redirectUrl[1]);
 				return;
 			}
 			window.location = location.protocol + "//" + location.host;
+
+			function createCookie(name, value, expiresAt) {
+				let cookie = "" + name + value,
+					deleting = expiresAt === -1,
+					expires = "";
+				if (expiresAt) {
+					expires = "; expires=" + new Date(deleting ? 0 : expiresAt * 1000).toGMTString();
+				}
+
+				const hostname = document.location.hostname.split(".");
+				for (let i = hostname.length - 1; i >= 0; i--) {
+					const h = hostname.slice(i).join(".");
+					document.cookie = cookie + expires + "; path=/; domain=." + h + ";\";
+					if (!deleting && document.cookie.indexOf(cookie) > -1) {
+						return;
+					}
+				}
+			}
 		}());
 	</script>`
 	return c.HTML(http.StatusOK, result)

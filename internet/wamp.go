@@ -44,6 +44,7 @@ var (
 )
 
 func wampInit() *wango.Wango {
+	wango.DebugMode()
 	w.StringMode()
 	w.SetSessionOpenCallback(sessionOpenCallback)
 	w.SetSessionCloseCallback(sessionCloseCallback)

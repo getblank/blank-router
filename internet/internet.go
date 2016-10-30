@@ -163,7 +163,7 @@ func facebookLoginHandler(c echo.Context) error {
 			window.location = location.protocol + "//" + location.host;
 
 			function createCookie(name, value, expiresAt) {
-				let cookie = "" + name + "=" + value,
+				var cookie = "" + name + "=" + value,
 					deleting = expiresAt === -1,
 					expires = "";
 				if (expiresAt) {
@@ -171,7 +171,7 @@ func facebookLoginHandler(c echo.Context) error {
 				}
 
 				const hostname = document.location.hostname.split(".");
-				for (let i = hostname.length - 1; i >= 0; i--) {
+				for (var i = hostname.length - 1; i >= 0; i--) {
 					const h = hostname.slice(i).join(".");
 					document.cookie = cookie + expires + "; path=\/; domain=." + h + ";";
 					if (!deleting && document.cookie.indexOf(cookie) > -1) {

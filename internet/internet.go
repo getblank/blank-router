@@ -60,8 +60,8 @@ func Init(version string) {
 	e.GET("/logout", logoutHandler, allowAnyOriginMiddleware())
 	e.POST("/register", registerHandler, allowAnyOriginMiddleware())
 	e.POST("/check-user", checkUserHTTPHandler, allowAnyOriginMiddleware())
-	e.POST("/send-reset-link", checkUserHTTPHandler, allowAnyOriginMiddleware())
-	e.POST("/reset-password", checkUserHTTPHandler, allowAnyOriginMiddleware())
+	e.POST("/send-reset-link", sendResetLinkHTTPHandler, allowAnyOriginMiddleware())
+	e.POST("/reset-password", resetPasswordHTTPHandler, allowAnyOriginMiddleware())
 
 	e.GET("/facebook-login", facebookLoginHandler)
 

@@ -163,7 +163,7 @@ func facebookLoginHandler(c echo.Context) error {
 			window.location = location.protocol + "//" + location.host;
 
 			function createCookie(name, value, expiresAt) {
-				let cookie = "" + name + value,
+				let cookie = "" + name + "=" + value,
 					deleting = expiresAt === -1,
 					expires = "";
 				if (expiresAt) {

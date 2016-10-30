@@ -173,7 +173,7 @@ func facebookLoginHandler(c echo.Context) error {
 				const hostname = document.location.hostname.split(".");
 				for (let i = hostname.length - 1; i >= 0; i--) {
 					const h = hostname.slice(i).join(".");
-					document.cookie = cookie + expires + "; path=/; domain=." + h + ";\";
+					document.cookie = cookie + expires + "; path=\/; domain=." + h + ";\\";
 					if (!deleting && document.cookie.indexOf(cookie) > -1) {
 						return;
 					}

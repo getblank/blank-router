@@ -183,6 +183,9 @@ func createHTTPActions(storeName string, actions []config.Action) {
 					"actionId": actionID,
 				},
 			}
+			if itemID := c.QueryParam("item-id"); itemID != "" {
+				t.Arguments["itemId"] = itemID
+			}
 			timeout := time.Hour
 			if settings.DevMode {
 				timeout = time.Second * 10

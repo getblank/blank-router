@@ -23,6 +23,8 @@ var (
 func main() {
 	if os.Getenv("BLANK_DEBUG") != "" {
 		log.SetLevel(log.DebugLevel)
+	}
+	if os.Getenv("DEV_MODE") != "" {
 		settings.DevMode = true
 	}
 	log.SetFormatter(&log.JSONFormatter{})

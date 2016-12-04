@@ -4,7 +4,6 @@ os:
 go:
   - 1.7.3
 script:
-  - go get -t -v ./...
   - go test ./...
 after_success:
   - go build -o blank-router-linux-amd64 -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"

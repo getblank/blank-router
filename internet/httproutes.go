@@ -209,26 +209,27 @@ func extractRequest(c echo.Context) map[string]interface{} {
 	for _, p := range c.ParamNames() {
 		params[p] = c.Param(p)
 	}
-	headerKeys := c.Request().Header()
-	reqHeader := c.Request().Header()
 	header := map[string]string{}
-	for _, k := range headerKeys.Keys() {
-		header[k] = reqHeader.Get(k)
+	for k, v := range c.Request().Header {
+		if len(v) > 0 {
+			header[k] = v[0]
+		}
 	}
 	var body interface{}
-	if rtype := c.Request().Header().Get("Content-Type"); strings.HasPrefix(rtype, "application/json") || strings.HasPrefix(rtype, "text/plain") {
+	if rtype := header["Content-Type"]; strings.HasPrefix(rtype, "application/json") || strings.HasPrefix(rtype, "text/plain") {
 		bodyBuf := bytes.NewBuffer(nil)
-		_, err := io.Copy(bodyBuf, c.Request().Body())
+		_, err := io.Copy(bodyBuf, c.Request().Body)
 		if err != nil && err != io.EOF {
 			log.Errorf("Can't read request http body for application/json. Error: %v", err)
 		} else {
 			body = bodyBuf.String()
 		}
 	}
+	formParams, _ := c.FormParams()
 	return map[string]interface{}{
 		"params":  params,
 		"query":   c.QueryParams(),
-		"form":    c.FormParams(),
+		"form":    formParams,
 		"ip":      extractIP(c),
 		"referer": c.Request().Referer(),
 		"header":  header,
@@ -239,12 +240,15 @@ func extractRequest(c echo.Context) map[string]interface{} {
 // Thanks to gin framework for algorithm
 // https://github.com/gin-gonic/gin/blob/master/context.go
 func extractIP(c echo.Context) string {
-	if c.Request().Header().Contains("X-Forwarded-For") {
-		clientIP := strings.TrimSpace(c.Request().Header().Get("X-Real-Ip"))
-		if len(clientIP) > 0 {
-			return clientIP
+	if clientIPHeader, ok := c.Request().Header["X-Forwarded-For"]; ok {
+		if xRealIP, ok := c.Request().Header["X-Real-Ip"]; ok {
+			clientIP := strings.TrimSpace(xRealIP[0])
+			if len(clientIP) > 0 {
+				return clientIP
+			}
 		}
-		clientIP = c.Request().Header().Get("X-Forwarded-For")
+
+		clientIP := clientIPHeader[0]
 		if index := strings.IndexByte(clientIP, ','); index >= 0 {
 			clientIP = clientIP[0:index]
 		}
@@ -253,7 +257,7 @@ func extractIP(c echo.Context) string {
 			return clientIP
 		}
 	}
-	if ip, _, err := net.SplitHostPort(strings.TrimSpace(c.Request().RemoteAddress())); err == nil {
+	if ip, _, err := net.SplitHostPort(strings.TrimSpace(c.Request().RemoteAddr)); err == nil {
 		return ip
 	}
 	return ""
@@ -291,7 +295,8 @@ func defaultResponse(res *result, c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, "can't decode file")
 		}
 		c.Response().Header().Set(echo.HeaderContentDisposition, "attachment; filename="+res.FileName)
-		return c.ServeContent(bytes.NewReader(buffer), res.FileName, time.Now())
+		return c.Blob(200, getContentType(res.FileName), buffer)
+		// return c.ServeContent(bytes.NewReader(buffer), res.FileName, time.Now())
 	default:
 		return c.JSON(http.StatusSeeOther, "unknown encoding type")
 	}

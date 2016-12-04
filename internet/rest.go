@@ -110,16 +110,18 @@ func createRESTAPIForStore(store config.Store) {
 
 func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		log.Debugf("REST ACTION: request store: %s, actionID: %s", storeName, actionID)
 		_cred := c.Get("cred")
 		if _cred == nil {
-			log.Warn("REST ACTION: no cred in echo context")
+			log.Warnf("REST ACTION: no cred in echo context store: %s, actionID: %s", storeName, actionID)
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
 		cred, ok := _cred.(credentials)
 		if !ok {
-			log.Warn("REST ACTION: invalid cred in echo context")
+			log.Warnf("REST ACTION: invalid cred in echo context store: %s, actionID: %s", storeName, actionID)
 			return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 		}
+		log.Debugf("REST ACTION: store: %s, actionID: %s. credentials extracted", storeName, actionID)
 		t := taskq.Task{
 			Type:   taskq.DbAction,
 			Store:  storeName,
@@ -129,14 +131,6 @@ func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 				"actionId": actionID,
 				"request":  extractRequest(c),
 			},
-		}
-		if c.Request().ContentLength() != 0 {
-			var data interface{}
-			err := c.Bind(&data)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, err.Error())
-			}
-			t.Arguments["data"] = data
 		}
 		res, err := taskq.PushAndGetResult(&t, time.Second*30) //TODO: decide how long we are waiting for response
 		if err != nil {

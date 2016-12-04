@@ -12,7 +12,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
 
 	"github.com/getblank/blank-router/berrors"
@@ -42,7 +41,7 @@ func Init(version string) {
 
 	assetsGroup := e.Group("/*", func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if c.Request().Method() != "GET" {
+			if c.Request().Method != "GET" {
 				c.Response().Header().Set("Allow", "GET")
 				return c.String(http.StatusMethodNotAllowed, "Allow: GET")
 			}
@@ -70,7 +69,7 @@ func Init(version string) {
 	e.POST("/check-jwt", checkJWTHandler, allowAnyOriginMiddleware())
 	e.OPTIONS("/check-jwt", checkJWTOptionsHandler, allowAnyOriginMiddleware())
 
-	e.Get("/sso-frame", ssoFrameHandler, allowAnyOriginMiddleware())
+	e.GET("/sso-frame", ssoFrameHandler, allowAnyOriginMiddleware())
 
 	wamp = wampInit()
 	e.GET("/wamp", wampHandler, jwtAuthMiddleware(false))
@@ -84,10 +83,10 @@ func Init(version string) {
 	})
 	if certFile, keyFile := os.Getenv("BLANK_SSL_CRT"), os.Getenv("BLANK_SSL_KEY"); certFile != "" && keyFile != "" {
 		log.Info("Starting internet server with SSL on port ", port)
-		e.Run(standard.WithTLS(":"+port, certFile, keyFile))
+		e.StartTLS(":"+port, certFile, keyFile)
 	}
 	log.Info("Starting internet server on port ", port)
-	e.Run(standard.New(":" + port))
+	e.Start(":" + port)
 }
 
 func checkJWTOptionsHandler(c echo.Context) error {
@@ -259,8 +258,8 @@ func registerHandler(c echo.Context) error {
 			"redirectUrl": c.QueryParam("redirectUrl"),
 		},
 	}
-	formParams := c.FormParams()
-	if len(formParams) > 2 {
+	formParams, err := c.FormParams()
+	if err == nil && len(formParams) > 2 {
 		for k, v := range formParams {
 			if k == "email" || k == "password" || len(v) == 0 {
 				continue
@@ -382,7 +381,7 @@ func commonSettingsHandler(c echo.Context) error {
 }
 
 func assetsHandler(c echo.Context) error {
-	var uri = "/assets" + c.Request().URL().Path()
+	var uri = "/assets" + c.Request().URL.Path
 	if uri == "/assets/" {
 		uri = "/assets/blank/index.html"
 	}

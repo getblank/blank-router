@@ -10,7 +10,6 @@ import (
 	"github.com/getblank/rgx"
 	"github.com/getblank/wango"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
 	"github.com/pkg/errors"
 
 	"github.com/getblank/blank-router/berrors"
@@ -44,6 +43,7 @@ var (
 )
 
 func wampInit() *wango.Wango {
+	wango.DebugMode()
 	w.StringMode()
 	w.SetSessionOpenCallback(sessionOpenCallback)
 	w.SetSessionCloseCallback(sessionCloseCallback)
@@ -118,7 +118,7 @@ func wampHandler(c echo.Context) error {
 		log.Warn("WAMP: invalid cred in echo context")
 		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 	}
-	return standard.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
+	return echo.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
 		wamp.WampHandler(ws, cred)
 	}))(c)
 }

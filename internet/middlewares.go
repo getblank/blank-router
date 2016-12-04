@@ -9,7 +9,6 @@ import (
 
 	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
-	"github.com/ivahaev/go-logger"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
@@ -22,8 +21,8 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			var accessToken string
-			if c.Request().Header().Contains("Authorization") {
-				authHeader := c.Request().Header().Get("Authorization")
+			if auth, ok := c.Request().Header["Authorization"]; ok {
+				authHeader := auth[0]
 				if !strings.HasPrefix(authHeader, "Bearer ") {
 					return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
 				}
@@ -53,7 +52,6 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 			}
 			_, err = intranet.CheckSession(apiKey)
 			if err != nil {
-				logger.Debug(err)
 				return c.JSON(http.StatusForbidden, ErrSessionNotFound.Error())
 			}
 			c.Set("cred", credentials{userID: userID, apiKey: apiKey})
@@ -79,12 +77,12 @@ func loggerMiddleware() echo.MiddlewareFunc {
 			}
 			start := time.Now()
 			entry := log.WithFields(log.Fields{
-				"request": c.Request().URI(),
-				"method":  c.Request().Method(),
-				"remote":  c.Request().RemoteAddress(),
+				"request": c.Request().URL.RequestURI,
+				"method":  c.Request().Method,
+				"remote":  c.Request().RemoteAddr,
 			})
-			if reqID := c.Request().Header().Get("X-Request-Id"); reqID != "" {
-				entry = entry.WithField("request_id", reqID)
+			if reqID, ok := c.Request().Header["X-Request-Id"]; ok {
+				entry = entry.WithField("request_id", reqID[0])
 			}
 			entry.Info("New request received")
 
@@ -94,8 +92,8 @@ func loggerMiddleware() echo.MiddlewareFunc {
 
 			latency := time.Since(start)
 			entry.WithFields(log.Fields{
-				"status":      c.Response().Status(),
-				"text_status": http.StatusText(c.Response().Status()),
+				"status":      c.Response().Status,
+				"text_status": http.StatusText(c.Response().Status),
 				"took":        latency,
 				fmt.Sprintf("measure#internet.latency"): latency.Nanoseconds(),
 			}).Info("Request completed")
@@ -116,8 +114,8 @@ func serverHeadersMiddleware(version string) echo.MiddlewareFunc {
 
 func extractToken(c echo.Context) string {
 	var accessToken string
-	if c.Request().Header().Contains("Authorization") {
-		authHeader := c.Request().Header().Get("Authorization")
+	if auth, ok := c.Request().Header["Authorization"]; ok {
+		authHeader := auth[0]
 		if strings.HasPrefix(authHeader, "Bearer ") {
 			accessToken = strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 		}

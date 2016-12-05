@@ -41,7 +41,7 @@ var (
 	resultChans  map[uint64]chan Result
 	resultLocker sync.Mutex
 
-	sequence uint64
+	sequence = uint64(time.Now().Unix() * 1000)
 
 	// ErrTimeout is a timeout error for tasks
 	ErrTimeout = errors.New("timeout")

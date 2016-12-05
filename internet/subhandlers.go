@@ -1,8 +1,6 @@
 package internet
 
 import (
-	"time"
-
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/getblank/blank-router/berrors"
@@ -48,7 +46,7 @@ func subConfigHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		UserID: cred.userID,
 	}
 	log.Debugf("Config request received for client: \"%s\"", c.ID())
-	res, err := taskq.PushAndGetResult(&t, time.Second*5)
+	res, err := taskq.PushAndGetResult(&t, 0)
 	log.Debugf("Config request completed for client: \"%s\"", c.ID())
 	if err != nil {
 		return nil, err

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
@@ -132,7 +131,7 @@ func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 				"request":  extractRequest(c),
 			},
 		}
-		res, err := taskq.PushAndGetResult(&t, time.Second*30) //TODO: decide how long we are waiting for response
+		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			if strings.EqualFold(err.Error(), "not found") {
 				return c.JSON(http.StatusNotFound, err.Error())
@@ -190,7 +189,7 @@ func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 				"query": findQuery,
 			},
 		}
-		res, err := taskq.PushAndGetResult(&t, time.Second*30) //TODO: decide how long we are waiting for response
+		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			if strings.EqualFold(err.Error(), "not found") {
 				return c.JSON(http.StatusNotFound, err.Error())
@@ -225,7 +224,7 @@ func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 				"_id": id,
 			},
 		}
-		res, err := taskq.PushAndGetResult(&t, time.Second*30) //TODO: decide how long we are waiting for response
+		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			if strings.EqualFold(err.Error(), "not found") {
 				return c.JSON(http.StatusNotFound, err.Error())
@@ -264,7 +263,7 @@ func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 				"item": item,
 			},
 		}
-		res, err := taskq.PushAndGetResult(&t, time.Second*30) //TODO: decide how long we are waiting for response
+		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			return c.JSON(http.StatusSeeOther, err.Error())
 		}
@@ -306,7 +305,7 @@ func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 				"item": item,
 			},
 		}
-		_, err = taskq.PushAndGetResult(&t, time.Second*30) //TODO: decide how long we are waiting for response
+		_, err = taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			return c.JSON(http.StatusSeeOther, err.Error())
 		}
@@ -338,7 +337,7 @@ func restDeleteDocumentHandler(storeName string) echo.HandlerFunc {
 				"_id": id,
 			},
 		}
-		_, err := taskq.PushAndGetResult(&t, time.Second*30) //TODO: decide how long we are waiting for response
+		_, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			if strings.EqualFold(err.Error(), "not found") {
 				return c.JSON(http.StatusNotFound, err.Error())

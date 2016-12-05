@@ -8,7 +8,6 @@ import (
 	"path"
 	"strconv"
 	"sync"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
@@ -123,7 +122,7 @@ func facebookLoginHandler(c echo.Context) error {
 			"redirectUrl": c.QueryParam("redirectUrl"),
 		},
 	}
-	res, err := taskq.PushAndGetResult(&t, time.Second*10)
+	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return c.HTML(http.StatusSeeOther, err.Error())
 	}
@@ -199,7 +198,7 @@ func loginHandler(c echo.Context) error {
 			"password": password,
 		},
 	}
-	res, err := taskq.PushAndGetResult(&t, time.Second*5)
+	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return c.JSON(http.StatusSeeOther, err.Error())
 	}
@@ -267,7 +266,7 @@ func registerHandler(c echo.Context) error {
 			t.Arguments[k] = v[0]
 		}
 	}
-	res, err := taskq.PushAndGetResult(&t, time.Second*10)
+	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -293,7 +292,7 @@ func checkUserHTTPHandler(c echo.Context) error {
 			},
 		},
 	}
-	_res, err := taskq.PushAndGetResult(&t, time.Second*5)
+	_res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return c.JSON(http.StatusOK, "USER_NOT_FOUND")
 	}
@@ -327,7 +326,7 @@ func sendResetLinkHTTPHandler(c echo.Context) error {
 			"email": email,
 		},
 	}
-	res, err := taskq.PushAndGetResult(&t, time.Second*30)
+	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return c.JSON(http.StatusSeeOther, err.Error())
 	}
@@ -351,7 +350,7 @@ func resetPasswordHTTPHandler(c echo.Context) error {
 			"password": password,
 		},
 	}
-	res, err := taskq.PushAndGetResult(&t, time.Second*30)
+	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return c.JSON(http.StatusSeeOther, err.Error())
 	}

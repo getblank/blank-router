@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/getblank/wango"
@@ -25,14 +24,24 @@ const (
 )
 
 var (
-	wampServer = wango.New()
+	wampServer           = wango.New()
+	taskWatchChan        = make(chan taskKeeper, 1000)
+	workerConnectChan    = make(chan string)
+	workerDisconnectChan = make(chan string)
 )
+
+type taskKeeper struct {
+	workerID string
+	taskID   uint64
+	done     bool
+}
 
 func taskGetHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
 	log.Debugf("Get task request from client \"%s\"", c.ID())
 	t := taskq.Shift()
 	log.Debugf("Shifted task id: \"%d\" type: \"%s\" for client \"%s\"", t.ID, t.Type, c.ID())
 	if c.Connected() {
+		taskWatchChan <- taskKeeper{c.ID(), t.ID, false}
 		return t, nil
 	}
 
@@ -58,6 +67,7 @@ func taskDoneHandler(c *wango.Conn, uri string, args ...interface{}) (interface{
 		Result: args[1],
 	}
 	taskq.Done(result)
+	taskWatchChan <- taskKeeper{c.ID(), uint64(id), true}
 	return nil, nil
 }
 
@@ -82,6 +92,7 @@ func taskErrorHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		Err: err,
 	}
 	taskq.Done(result)
+	taskWatchChan <- taskKeeper{c.ID(), uint64(id), true}
 	return nil, nil
 }
 
@@ -119,10 +130,12 @@ func cronRunHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 
 func internalOpenCallback(c *wango.Conn) {
 	log.Infof("Connected client to TQ: '%s'", c.ID())
+	workerConnectChan <- c.ID()
 }
 
 func internalCloseCallback(c *wango.Conn) {
 	log.Infof("Disconnected client from TQ: '%s'", c.ID())
+	workerDisconnectChan <- c.ID()
 }
 
 // args: uri string, event interface{}, subscribers array of connIDs
@@ -166,7 +179,7 @@ func subStoresHandler(c *wango.Conn, _uri string, args ...interface{}) (interfac
 			"take":  1,
 		},
 	}
-	_res, err := taskq.PushAndGetResult(&t, time.Second*10)
+	_res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +193,41 @@ func subStoresHandler(c *wango.Conn, _uri string, args ...interface{}) (interfac
 	return result, nil
 }
 
+func taskWatcher() {
+	workerTasks := map[string]map[uint64]struct{}{}
+	errWorkerDisconnectedText := "connection with worker lost"
+	for {
+		select {
+		case t := <-taskWatchChan:
+			if t.done {
+				delete(workerTasks[t.workerID], t.taskID)
+			} else {
+				workerTasks[t.workerID][t.taskID] = struct{}{}
+			}
+		case workerID := <-workerConnectChan:
+			workerTasks[workerID] = map[uint64]struct{}{}
+		case workerID := <-workerDisconnectChan:
+			workerTasksNumber := len(workerTasks[workerID])
+			if len(workerTasks[workerID]) == 0 {
+				continue
+			}
+			log.Infof("Worker %s disconnected. Need to close all proccessing tasks by this worker with error. Worker is running %d tasks now.", workerID, workerTasksNumber)
+			for taskID := range workerTasks[workerID] {
+				result := taskq.Result{
+					ID:  taskID,
+					Err: errWorkerDisconnectedText,
+				}
+				taskq.Done(result)
+			}
+			delete(workerTasks, workerID)
+			log.Infof("All workers %s tasks closed.", workerID)
+		}
+	}
+}
+
 func runServer() {
+	go taskWatcher()
+
 	wampServer.SetSessionOpenCallback(internalOpenCallback)
 	wampServer.SetSessionCloseCallback(internalCloseCallback)
 

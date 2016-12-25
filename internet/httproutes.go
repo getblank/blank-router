@@ -216,7 +216,13 @@ func extractRequest(c echo.Context) map[string]interface{} {
 			body = bodyBuf.String()
 		}
 	}
+
 	formParams, _ := c.FormParams()
+	var data interface{}
+	if _data := formParams["data"]; len(_data) > 0 {
+		data = _data[0]
+	}
+
 	return map[string]interface{}{
 		"params":  params,
 		"query":   c.QueryParams(),
@@ -225,6 +231,7 @@ func extractRequest(c echo.Context) map[string]interface{} {
 		"referer": c.Request().Referer(),
 		"header":  header,
 		"body":    body,
+		"data":    data,
 	}
 }
 

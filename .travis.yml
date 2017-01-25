@@ -18,12 +18,15 @@ after_success:
       curl --ftp-create-dirs --data-binary -k -T ./blank-router-darwin-amd64 -u $FTP_USER:$FTP_PASSWORD ftp://releases.getblank.net/releases/blank-router/${TRAVIS_TAG}/blank-router-darwin-amd64;
     fi
 
+  - GOOS=windows GOARCH=amd64 go build -o blank-router-windows-amd64.exe -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
+
 deploy:
   provider: releases
   api_key: "$GITHUB_OAUTH_TOKEN"
   file:
     - "blank-router-linux-amd64"
     - "blank-router-darwin-amd64"
+    - "blank-router-windows-amd64.exe"
   skip_cleanup: true
   on:
     tags: true

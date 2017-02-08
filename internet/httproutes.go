@@ -207,13 +207,15 @@ func extractRequest(c echo.Context) map[string]interface{} {
 		}
 	}
 	var body interface{}
-	if rtype := header["Content-Type"]; strings.HasPrefix(rtype, "application/json") || strings.HasPrefix(rtype, "text/plain") {
-		bodyBuf := bytes.NewBuffer(nil)
-		_, err := io.Copy(bodyBuf, c.Request().Body)
-		if err != nil && err != io.EOF {
-			log.Errorf("Can't read request http body for application/json. Error: %v", err)
-		} else {
+	bodyBuf := bytes.NewBuffer(nil)
+	_, err := io.Copy(bodyBuf, c.Request().Body)
+	if err != nil && err != io.EOF {
+		log.Errorf("Can't read request http body for application/json. Error: %v", err)
+	} else {
+		if rtype := header["Content-Type"]; strings.HasPrefix(rtype, "application/json") || strings.HasPrefix(rtype, "text/plain") {
 			body = bodyBuf.String()
+		} else {
+			body = base64.StdEncoding.EncodeToString(bodyBuf.Bytes())
 		}
 	}
 

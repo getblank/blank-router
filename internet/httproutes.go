@@ -50,36 +50,69 @@ func onConfigUpdate(c map[string]config.Store) {
 		if store.HTTPAPI {
 			httpEnabledStores = append(httpEnabledStores, store)
 		}
+
 		storeName := s
 		groupURI := "/hooks/" + storeName + "/"
+		var lowerGroupURI string
+		if lowerStoreName := strings.ToLower(storeName); lowerStoreName != storeName {
+			lowerGroupURI = "/hooks/" + lowerStoreName + "/"
+		}
+
 		group := e.Group(groupURI)
+		lowerGroup := e.Group(lowerGroupURI)
 		for i, hook := range store.HTTPHooks {
 			if hook.URI == "" {
 				log.Error("Empty URI in hook", strconv.Itoa(i), " for "+groupURI+". Will ignored")
 				continue
 			}
 			var handler func(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc)
+			var lowerHandler func(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc)
 			switch hook.Method {
 			case "GET", "Get", "get":
 				handler = group.GET
+				if lowerGroupURI != "" {
+					lowerHandler = lowerGroup.GET
+				}
 			case "POST", "Post", "post":
 				handler = group.POST
+				if lowerGroupURI != "" {
+					lowerHandler = lowerGroup.POST
+				}
 			case "PUT", "Put", "put":
 				handler = group.PUT
+				if lowerGroupURI != "" {
+					lowerHandler = lowerGroup.PUT
+				}
 			case "PATCH", "Patch", "patch":
 				handler = group.PATCH
+				if lowerGroupURI != "" {
+					lowerHandler = lowerGroup.PATCH
+				}
 			case "DELETE", "Delete", "delete":
 				handler = group.DELETE
+				if lowerGroupURI != "" {
+					lowerHandler = lowerGroup.DELETE
+				}
 			case "HEAD", "Head", "head":
 				handler = group.HEAD
+				if lowerGroupURI != "" {
+					lowerHandler = lowerGroup.HEAD
+				}
 			case "OPTIONS", "Options", "options":
 				handler = group.OPTIONS
+				if lowerGroupURI != "" {
+					lowerHandler = lowerGroup.OPTIONS
+				}
 			default:
 				log.Warn("UNKNOWN HTTP METHOD. Will use GET method ", hook)
 				handler = group.GET
+				if lowerGroupURI != "" {
+					lowerHandler = lowerGroup.GET
+				}
 			}
+
 			hookIndex := i
-			handler(hook.URI, func(c echo.Context) error {
+			var hookHandler = func(c echo.Context) error {
 				t := taskq.Task{
 					Store:  storeName,
 					Type:   taskq.HTTPHook,
@@ -93,13 +126,21 @@ func onConfigUpdate(c map[string]config.Store) {
 				if err != nil {
 					return c.JSON(http.StatusSeeOther, err.Error())
 				}
+
 				res, err := parseResult(_res)
 				if err != nil {
 					return c.JSON(http.StatusInternalServerError, err.Error())
 				}
+
 				return defaultResponse(res, c)
-			})
+			}
+
+			handler(hook.URI, hookHandler)
 			log.Infof("Created '%s' httpHook for store '%s' with path %s", hook.Method, storeName, groupURI+hook.URI)
+			if lowerHandler != nil {
+				lowerHandler(hook.URI, hookHandler)
+				log.Infof("Created '%s' httpHook on lower case for store '%s' with path %s", hook.Method, storeName, lowerGroupURI+hook.URI)
+			}
 		}
 
 		if len(store.Actions) > 0 {

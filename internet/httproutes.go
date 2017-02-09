@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	logger "github.com/ivahaev/go-logger"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
@@ -247,18 +248,6 @@ func extractRequest(c echo.Context) map[string]interface{} {
 			header[k] = v[0]
 		}
 	}
-	var body interface{}
-	bodyBuf := bytes.NewBuffer(nil)
-	_, err := io.Copy(bodyBuf, c.Request().Body)
-	if err != nil && err != io.EOF {
-		log.Errorf("Can't read request http body for application/json. Error: %v", err)
-	} else {
-		if rtype := header["Content-Type"]; strings.HasPrefix(rtype, "application/json") || strings.HasPrefix(rtype, "text/plain") {
-			body = bodyBuf.String()
-		} else {
-			body = base64.StdEncoding.EncodeToString(bodyBuf.Bytes())
-		}
-	}
 
 	formParams, _ := c.FormParams()
 	var data interface{}
@@ -266,6 +255,19 @@ func extractRequest(c echo.Context) map[string]interface{} {
 		data = _data[0]
 	}
 
+	var body interface{}
+	bodyBuf := bytes.NewBuffer(nil)
+	_, err := io.Copy(bodyBuf, c.Request().Body)
+	if err != nil && err != io.EOF {
+		log.Errorf("Can't read request http body. Error: %v", err)
+	} else {
+		if rtype := header["Content-Type"]; strings.HasPrefix(rtype, "application/json") || strings.HasPrefix(rtype, "text/plain") {
+			body = bodyBuf.String()
+		} else {
+			body = base64.StdEncoding.EncodeToString(bodyBuf.Bytes())
+		}
+	}
+	logger.Debug(formParams, body)
 	return map[string]interface{}{
 		"params":  params,
 		"query":   c.QueryParams(),

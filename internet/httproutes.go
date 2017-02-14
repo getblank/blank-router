@@ -173,7 +173,7 @@ func createFileHandlers(storeName string) {
 	group := e.Group(groupURI)
 	group.POST("/", postFileHandler(storeName), jwtAuthMiddleware(false))
 	group.GET("/:id", getFileHandler(storeName), jwtAuthMiddleware(true))
-	// group.POST("/:id", postFileHandler(storeName), jwtAuthMiddleware(false))
+	group.POST("/:id", postFileHandler(storeName), jwtAuthMiddleware(false))
 	group.DELETE("/:id", deleteFileHandler(storeName), jwtAuthMiddleware(false))
 	log.Infof("Created handlers for fileStore '%s' with path %s:id", storeName, groupURI)
 }

@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	logger "github.com/ivahaev/go-logger"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
@@ -268,7 +267,7 @@ func extractRequest(c echo.Context) map[string]interface{} {
 			body = base64.StdEncoding.EncodeToString(bodyBuf.Bytes())
 		}
 	}
-	logger.Debug(formParams, body)
+
 	return map[string]interface{}{
 		"params":  params,
 		"query":   c.QueryParams(),

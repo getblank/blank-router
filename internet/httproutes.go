@@ -186,6 +186,7 @@ func writeFileFromFileStore(c echo.Context, storeName, fileID string) error {
 	defer res.Body.Close()
 	fileName := res.Header.Get("file-name")
 	c.Response().Header().Add("Content-Type", getContentType(fileName))
+	c.Response().Header().Set(echo.HeaderContentDisposition, "attachment; filename="+fileName)
 	body, _ := ioutil.ReadAll(res.Body)
 	_, err = c.Response().Write(body)
 	return err

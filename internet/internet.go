@@ -31,6 +31,10 @@ var (
 
 // Init starts internet http server
 func Init(version string) {
+	if p := os.Getenv("BLANK_HTTP_PORT"); p != "" {
+		port = p
+	}
+
 	log.Info("Init internet server on port ", port)
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Gzip())

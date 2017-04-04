@@ -17,6 +17,7 @@ const (
 const (
 	DbGet                = "dbGet"
 	DbSet                = "dbSet"
+	DbInsert             = "dbInsert"
 	DbDelete             = "dbDelete"
 	DbFind               = "dbFind"
 	DbLoadRefs           = "dbLoadRefs"

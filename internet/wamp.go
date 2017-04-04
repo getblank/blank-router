@@ -428,6 +428,10 @@ func rgxRPCHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 			t.Type = taskq.DbSet
 			t.Arguments = map[string]interface{}{"item": args[0]}
 			return taskq.PushAndGetResult(&t, 0)
+		case "insert":
+			t.Type = taskq.DbInsert
+			t.Arguments = map[string]interface{}{"item": args[0]}
+			return taskq.PushAndGetResult(&t, 0)
 		case "delete":
 			t.Type = taskq.DbDelete
 			t.Arguments = map[string]interface{}{"_id": args[0]}

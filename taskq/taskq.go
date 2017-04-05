@@ -14,6 +14,7 @@ const (
 	extraQueueLength = 1000
 )
 
+// tasks decription constants
 const (
 	DbGet                = "dbGet"
 	DbSet                = "dbSet"

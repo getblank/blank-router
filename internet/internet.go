@@ -230,17 +230,25 @@ func loginHandler(c echo.Context) error {
 }
 
 func logoutHandler(c echo.Context) error {
-	apiKey := c.QueryParam("key")
-	if apiKey == "" {
+	accessToken := c.QueryParam("key")
+	if accessToken == "" {
 		return c.JSON(http.StatusBadRequest, errUserIDNotFound.Error())
 	}
-	err := intranet.DeleteSession(apiKey)
+
+	apiKey, _, err := extractAPIKeyAndUserIDromJWT(accessToken)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	err = intranet.DeleteSession(apiKey)
 	if redirectURL := c.QueryParam("redirectUrl"); redirectURL != "" {
 		return c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 	}
+
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
+
 	return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 }
 

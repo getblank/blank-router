@@ -47,7 +47,7 @@ func onConfigUpdate(c map[string]config.Store) {
 	}
 	httpEnabledStores := []config.Store{}
 	for s, store := range c {
-		if store.HTTPAPI {
+		if !strings.HasPrefix(store.Store, "_") {
 			httpEnabledStores = append(httpEnabledStores, store)
 		}
 

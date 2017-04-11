@@ -8,6 +8,7 @@ import (
 	"path"
 	"strconv"
 	"sync"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
@@ -221,6 +222,20 @@ func loginHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
+
+	claims, err := extractClaimsFromJWT(accessToken)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	accessTokenCookie := &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Expires:  time.Unix(claims.ExpiresAt, 0),
+		Path:     "/",
+		HttpOnly: true,
+	}
+	c.SetCookie(accessTokenCookie)
 
 	result := map[string]interface{}{
 		"access_token": accessToken,

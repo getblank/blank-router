@@ -29,6 +29,11 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 				accessToken = strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 			} else {
 				accessToken = c.QueryParam("access_token")
+				if len(accessToken) == 0 {
+					if cookie, err := c.Cookie("access_token"); err == nil {
+						accessToken = cookie.Value
+					}
+				}
 			}
 			if accessToken == "" {
 				if allowGuests {

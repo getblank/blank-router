@@ -136,13 +136,8 @@ func facebookLoginHandler(c echo.Context) error {
 		log.WithField("result", res).Warn("Invalid type of result on http login")
 		return c.HTML(http.StatusInternalServerError, berrors.ErrError.Error())
 	}
-	userID, ok := user["_id"].(string)
-	if !ok {
-		log.WithField("user._id", user["_id"]).Warn("Invalid type of user._id on http login")
-		return c.HTML(http.StatusInternalServerError, berrors.ErrError.Error())
-	}
 
-	apiKey, err := intranet.NewSession(userID, user)
+	apiKey, err := intranet.NewSession(user)
 	if err != nil {
 		return c.HTML(http.StatusInternalServerError, err.Error())
 	}
@@ -212,13 +207,8 @@ func loginHandler(c echo.Context) error {
 		log.WithField("result", res).Warn("Invalid type of result on http login")
 		return c.JSON(http.StatusInternalServerError, berrors.ErrError.Error())
 	}
-	userID, ok := user["_id"].(string)
-	if !ok {
-		log.WithField("user._id", user["_id"]).Warn("Invalid type of user._id on http login")
-		return c.JSON(http.StatusInternalServerError, berrors.ErrError.Error())
-	}
 
-	accessToken, err := intranet.NewSession(userID, user)
+	accessToken, err := intranet.NewSession(user)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

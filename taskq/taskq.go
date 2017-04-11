@@ -59,7 +59,7 @@ type Result struct {
 // Task represents task for workers
 type Task struct {
 	ID        uint64                 `json:"id"`
-	UserID    string                 `json:"userId"`
+	UserID    interface{}            `json:"userId"`
 	Store     string                 `json:"store"`
 	Type      string                 `json:"type"`
 	Arguments map[string]interface{} `json:"args"`

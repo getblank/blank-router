@@ -1,6 +1,6 @@
 package internet
 
 type credentials struct {
-	userID string
+	userID interface{}
 	apiKey string
 }

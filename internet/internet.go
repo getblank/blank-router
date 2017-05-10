@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -397,10 +398,19 @@ func commonSettingsHandler(c echo.Context) error {
 }
 
 func assetsHandler(c echo.Context) error {
-	var uri = "/assets" + c.Request().URL.Path
-	if uri == "/assets/" {
+	uriPath := c.Request().URL.Path
+	var uri string
+	assetsRequest := strings.HasPrefix(uriPath, "/app/assets")
+	if uriPath == "/" || (strings.HasPrefix(uriPath, "/app") && !assetsRequest) {
 		uri = "/assets/blank/index.html"
+	} else {
+		uri = strings.TrimPrefix(uriPath, "/app")
 	}
+
+	if assetsRequest {
+
+	}
+
 	if len(path.Ext(uri)) == 0 {
 		uri += "/index.html"
 	}

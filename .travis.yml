@@ -2,13 +2,13 @@ language: go
 os:
   - linux
 go:
-  - 1.8
+  - 1.8.1
 script:
   - go test ./...
 after_success:
   - go build -o blank-router-linux-amd64 -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
   - GOOS=darwin GOARCH=amd64 go build -o blank-router-darwin-amd64 -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
-  - GOOS=windows GOARCH=amd64 go build -o blank-router-windows-amd64.exe -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
+  - GOOS=windows GOARCH=amd64 go build -o blank-router-win32-amd64.exe -ldflags "-X main.buildTime=`date +%Y-%m-%d:%H:%M:%S` -X main.gitHash=`git rev-parse --short HEAD`"
 
 deploy:
   provider: releases
@@ -16,7 +16,7 @@ deploy:
   file:
     - "blank-router-linux-amd64"
     - "blank-router-darwin-amd64"
-    - "blank-router-windows-amd64.exe"
+    - "blank-router-win32-amd64.exe"
   skip_cleanup: true
   on:
     tags: true

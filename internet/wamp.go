@@ -131,8 +131,8 @@ func sessionCloseCallback(c *wango.Conn) {
 		log.WithField("extra", extra).Warn("Invalid type of extra on session close")
 		return
 	}
-	log.WithFields(log.Fields{"connId": c.ID(), "apiKey": cred.apiKey, "userId": cred.userID}).Info("User disconnected")
-	err := intranet.DeleteConnection(cred.apiKey, c.ID())
+	log.WithFields(log.Fields{"connId": c.ID(), "apiKey": cred.sessionID, "userId": cred.userID}).Info("User disconnected")
+	err := intranet.DeleteConnection(cred.sessionID, c.ID())
 	if err != nil {
 		log.WithError(err).Error("Can't delete connection when session closed")
 	}
@@ -158,7 +158,7 @@ func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 			log.WithField("extra", extra).Warn("Invalid type of extra on connection when rpx handler")
 			return nil, berrors.ErrError
 		}
-		_, err := intranet.CheckSession(cred.apiKey)
+		_, err := intranet.CheckSession(cred.sessionID)
 		if err != nil {
 			return nil, berrors.ErrForbidden
 		}
@@ -273,7 +273,7 @@ func signOutHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 		log.WithField("extra", extra).Warn("Extra is invalid type")
 		return nil, berrors.ErrError
 	}
-	err := intranet.DeleteSession(cred.apiKey)
+	err := intranet.DeleteSession(cred.sessionID)
 	c.SetExtra(nil)
 	return nil, err
 }
@@ -318,7 +318,7 @@ func rgxRPCHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 			log.WithField("extra", extra).Warn("Invalid type of extra on connection when rpx handler")
 			return nil, berrors.ErrError
 		}
-		_, err := intranet.CheckSession(cred.apiKey)
+		_, err := intranet.CheckSession(cred.sessionID)
 		if err != nil {
 			return nil, berrors.ErrForbidden
 		}

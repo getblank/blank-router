@@ -51,15 +51,17 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 			}
 			publicKeyLocker.Unlock()
 
-			apiKey, userID, err := extractAPIKeyAndUserIDromJWT(accessToken)
+			claims, err := extractClaimsFromJWT(accessToken)
 			if err != nil {
 				return c.JSON(http.StatusForbidden, err.Error())
 			}
-			_, err = intranet.CheckSession(apiKey)
+
+			_, err = intranet.CheckSession(claims.SessionID)
 			if err != nil {
 				return c.JSON(http.StatusForbidden, ErrSessionNotFound.Error())
 			}
-			c.Set("cred", credentials{userID: userID, apiKey: apiKey})
+
+			c.Set("cred", credentials{userID: claims.UserID, sessionID: claims.SessionID, extra: claims.Extra})
 			return next(c)
 		}
 	}

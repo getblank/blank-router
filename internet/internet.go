@@ -44,6 +44,10 @@ func Init(version string) {
 	e.Use(serverHeadersMiddleware(version))
 	e.Use(middleware.Recover())
 
+	e.GET("/", func(c echo.Context) error {
+		return c.Redirect(http.StatusTemporaryRedirect, "/app/")
+	})
+
 	assetsGroup := e.Group("/*", func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if c.Request().Method != "GET" {

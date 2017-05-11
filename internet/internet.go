@@ -45,7 +45,7 @@ func Init(version string) {
 	e.Use(middleware.Recover())
 
 	e.GET("/", func(c echo.Context) error {
-		return c.Redirect(http.StatusTemporaryRedirect, "/app/")
+		return c.Redirect(http.StatusTemporaryRedirect, "app/")
 	})
 
 	assetsGroup := e.Group("/*", func(next echo.HandlerFunc) echo.HandlerFunc {

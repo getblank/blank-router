@@ -95,7 +95,7 @@ func Init(version string) {
 		e.StartTLS(":"+port, certFile, keyFile)
 	}
 	log.Info("Starting internet server on port ", port)
-	e.Start(":" + port)
+	log.Fatal(e.Start(":" + port))
 }
 
 func checkJWTOptionsHandler(c echo.Context) error {

@@ -34,7 +34,7 @@ const (
 )
 
 var (
-	rgxRPC = rgx.New(`^com\.stores\.(?P<store>[a-zA-Z0-9_*).(?P<command>[a-z\-]*)$`)
+	rgxRPC = rgx.New(`^com\.stores\.(?P<store>[a-zA-Z0-9_]*).(?P<command>[a-z\-]*)$`)
 	w      = wango.New()
 	wamp   *wango.Wango
 

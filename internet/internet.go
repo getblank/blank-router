@@ -191,7 +191,7 @@ func loginHandler(c echo.Context) error {
 	login := c.FormValue("login")
 	password := c.FormValue("password")
 	hashedPassword := c.FormValue("hashedPassword")
-	if len(login) == 0 || (len(password) == 0 || len(hashedPassword) == 0) {
+	if len(login) == 0 || (len(password) == 0 && len(hashedPassword) == 0) {
 		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
 	}
 

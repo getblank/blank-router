@@ -190,15 +190,17 @@ func facebookLoginHandler(c echo.Context) error {
 func loginHandler(c echo.Context) error {
 	login := c.FormValue("login")
 	password := c.FormValue("password")
-	if len(login) == 0 || len(password) == 0 {
+	hashedPassword := c.FormValue("hashedPassword")
+	if len(login) == 0 || (len(password) == 0 || len(hashedPassword) == 0) {
 		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
 	}
 
 	t := taskq.Task{
 		Type: taskq.Auth,
 		Arguments: map[string]interface{}{
-			"login":    login,
-			"password": password,
+			"login":          login,
+			"password":       password,
+			"hashedPassword": hashedPassword,
 		},
 	}
 	res, err := taskq.PushAndGetResult(&t, 0)

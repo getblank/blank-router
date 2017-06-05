@@ -188,6 +188,11 @@ func facebookLoginHandler(c echo.Context) error {
 }
 
 func loginHandler(c echo.Context) error {
+	formParams, err := c.FormParams()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
+	}
+
 	login := c.FormValue("login")
 	password := c.FormValue("password")
 	hashedPassword := c.FormValue("hashedPassword")
@@ -195,13 +200,14 @@ func loginHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
 	}
 
+	fp := map[string]interface{}{}
+	for k := range formParams {
+		fp[k] = c.FormValue(k)
+	}
+
 	t := taskq.Task{
-		Type: taskq.Auth,
-		Arguments: map[string]interface{}{
-			"login":          login,
-			"password":       password,
-			"hashedPassword": hashedPassword,
-		},
+		Type:      taskq.Auth,
+		Arguments: fp,
 	}
 	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {

@@ -246,18 +246,20 @@ func loginHandler(c echo.Context) error {
 }
 
 func logoutHandler(c echo.Context) error {
-	accessToken := c.QueryParam("key")
-	if accessToken == "" {
-		return c.JSON(http.StatusBadRequest, errUserIDNotFound.Error())
+	accessToken := extractToken(c)
+	if len(accessToken) == 0 {
+		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 	}
 
 	apiKey, _, err := extractAPIKeyAndUserIDromJWT(accessToken)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+		clearBlankToken(c)
+		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 	}
 
 	err = intranet.DeleteSession(apiKey)
 	if redirectURL := c.QueryParam("redirectUrl"); redirectURL != "" {
+		clearBlankToken(c)
 		return c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 	}
 
@@ -265,6 +267,7 @@ func logoutHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
+	clearBlankToken(c)
 	return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 }
 

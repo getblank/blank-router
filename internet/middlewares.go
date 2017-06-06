@@ -20,21 +20,7 @@ var ErrSessionNotFound = errors.New("session not found")
 func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			var accessToken string
-			if auth, ok := c.Request().Header["Authorization"]; ok {
-				authHeader := auth[0]
-				if !strings.HasPrefix(authHeader, "Bearer ") {
-					return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
-				}
-				accessToken = strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
-			} else {
-				accessToken = c.QueryParam("access_token")
-				if len(accessToken) == 0 {
-					if cookie, err := c.Cookie("access_token"); err == nil {
-						accessToken = cookie.Value
-					}
-				}
-			}
+			accessToken := extractToken(c)
 			if accessToken == "" {
 				if allowGuests {
 					c.Set("cred", credentials{userID: "guest"})
@@ -121,13 +107,18 @@ func serverHeadersMiddleware(version string) echo.MiddlewareFunc {
 
 func extractToken(c echo.Context) string {
 	var accessToken string
-	if auth, ok := c.Request().Header["Authorization"]; ok {
-		authHeader := auth[0]
+	if authHeader := c.Request().Header.Get("Authorization"); len(authHeader) != 0 {
 		if strings.HasPrefix(authHeader, "Bearer ") {
-			accessToken = strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+			return strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 		}
-	} else {
-		accessToken = c.QueryParam("access_token")
 	}
+
+	accessToken = c.QueryParam("access_token")
+	if len(accessToken) == 0 {
+		if cookie, err := c.Cookie("access_token"); err == nil && cookie.Expires.Before(time.Now()) {
+			accessToken = cookie.Value
+		}
+	}
+
 	return accessToken
 }

@@ -26,6 +26,8 @@ const (
 	WidgetData           = "widgetData"
 	Auth                 = "authentication"
 	SignUp               = "signup"
+	SignOut              = "signOut"
+	DidSignOut           = "didSignOut"
 	PasswordResetRequest = "passwordResetRequest"
 	PasswordReset        = "passwordReset"
 	UserConfig           = "userConfig"

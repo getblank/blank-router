@@ -251,20 +251,46 @@ func logoutHandler(c echo.Context) error {
 		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 	}
 
-	apiKey, _, err := extractAPIKeyAndUserIDromJWT(accessToken)
+	apiKey, userID, err := extractAPIKeyAndUserIDromJWT(accessToken)
 	if err != nil {
 		clearBlankToken(c)
 		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 	}
 
+	t := taskq.Task{
+		Type:   taskq.SignOut,
+		UserID: userID,
+	}
+	_, err = taskq.PushAndGetResult(&t, 30*time.Second)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	_, err = intranet.CheckSession(apiKey)
+	if err != nil {
+		log.Warnf("intranet.CheckSession for apiKey %s error: %v", apiKey, err)
+		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
+	}
+
 	err = intranet.DeleteSession(apiKey)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	go func() {
+		t := taskq.Task{
+			Type:   taskq.DidSignOut,
+			UserID: userID,
+		}
+		_, err = taskq.PushAndGetResult(&t, 30*time.Second)
+		if err != nil {
+			log.Errorf("User %s didSignOut error: %v", userID, err)
+		}
+	}()
+
 	if redirectURL := c.QueryParam("redirectUrl"); redirectURL != "" {
 		clearBlankToken(c)
 		return c.Redirect(http.StatusTemporaryRedirect, redirectURL)
-	}
-
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	clearBlankToken(c)

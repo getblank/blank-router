@@ -251,15 +251,22 @@ func logoutHandler(c echo.Context) error {
 		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 	}
 
-	apiKey, userID, err := extractAPIKeyAndUserIDromJWT(accessToken)
+	claims, err := extractClaimsFromJWT(accessToken)
 	if err != nil {
 		clearBlankToken(c)
 		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 	}
 
+	apiKey, userID := claims.SessionID, claims.UserID
+	arguments := map[string]interface{}{"userId": userID, "sessionId": apiKey}
+	for k, v := range claims.Extra {
+		arguments[k] = v
+	}
+
 	t := taskq.Task{
-		Type:   taskq.SignOut,
-		UserID: userID,
+		Type:      taskq.SignOut,
+		UserID:    userID,
+		Arguments: arguments,
 	}
 	_, err = taskq.PushAndGetResult(&t, 30*time.Second)
 	if err != nil {
@@ -279,8 +286,9 @@ func logoutHandler(c echo.Context) error {
 
 	go func() {
 		t := taskq.Task{
-			Type:   taskq.DidSignOut,
-			UserID: userID,
+			Type:      taskq.DidSignOut,
+			UserID:    userID,
+			Arguments: arguments,
 		}
 		_, err = taskq.PushAndGetResult(&t, 30*time.Second)
 		if err != nil {

@@ -13,5 +13,5 @@ type credentials struct {
 }
 
 func clearBlankToken(c echo.Context) {
-	c.SetCookie(&http.Cookie{Name: "access_token", Value: "deleted", MaxAge: -1})
+	c.SetCookie(&http.Cookie{Name: "access_token", Value: "deleted", Path: "/", MaxAge: -1})
 }

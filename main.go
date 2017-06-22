@@ -63,6 +63,9 @@ func main() {
 	}
 	srAddress = rootCmd.PersistentFlags().StringP("service-registry", "s", "ws://localhost:1234", "Service registry uri")
 	verFlag = rootCmd.PersistentFlags().BoolP("version", "v", false, "Prints version and exit")
+	if sr := os.Getenv("BLANK_SERVICE_REGISTRY"); len(sr) > 0 {
+		srAddress = &sr
+	}
 
 	if err := rootCmd.Execute(); err != nil {
 		println(err.Error())

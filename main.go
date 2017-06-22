@@ -54,6 +54,16 @@ func main() {
 				printVersion()
 				return
 			}
+
+			if sr := os.Getenv("BLANK_SERVICE_REGISTRY_URI"); len(sr) > 0 {
+				srAddress = &sr
+			}
+
+			if srPort := os.Getenv("BLANK_SERVICE_REGISTRY_PORT"); len(srPort) > 0 {
+				addr := "ws://localhost:" + srPort
+				srAddress = &addr
+			}
+
 			log.Info("Router started")
 			settings.SRAddress = *srAddress
 			settings.SRHTTPAddress = "http:" + strings.TrimPrefix(*srAddress, "ws:")
@@ -63,14 +73,6 @@ func main() {
 	}
 	srAddress = rootCmd.PersistentFlags().StringP("service-registry", "s", "ws://localhost:1234", "Service registry uri")
 	verFlag = rootCmd.PersistentFlags().BoolP("version", "v", false, "Prints version and exit")
-	if sr := os.Getenv("BLANK_SERVICE_REGISTRY_URI"); len(sr) > 0 {
-		srAddress = &sr
-	}
-
-	if srPort := os.Getenv("BLANK_SERVICE_REGISTRY_PORT"); len(srPort) > 0 {
-		addr := "ws://localhost:" + srPort
-		srAddress = &addr
-	}
 
 	if err := rootCmd.Execute(); err != nil {
 		println(err.Error())

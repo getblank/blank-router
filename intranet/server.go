@@ -3,6 +3,7 @@ package intranet
 import (
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -14,13 +15,12 @@ import (
 )
 
 const (
-	getTaskURI    = "get"
-	doneTaskURI   = "done"
-	errorTaskURI  = "error"
-	publishURI    = "publish"
-	cronRunURI    = "cron.run"
-	listeningPort = "2345"
-	uriSubStores  = "com.stores"
+	getTaskURI   = "get"
+	doneTaskURI  = "done"
+	errorTaskURI = "error"
+	publishURI   = "publish"
+	cronRunURI   = "cron.run"
+	uriSubStores = "com.stores"
 )
 
 var (
@@ -28,6 +28,7 @@ var (
 	taskWatchChan        = make(chan taskKeeper, 1000)
 	workerConnectChan    = make(chan string)
 	workerDisconnectChan = make(chan string)
+	listeningPort        = "2345"
 )
 
 type taskKeeper struct {
@@ -265,6 +266,11 @@ func runServer() {
 		wampServer.WampHandler(ws, nil)
 	}
 	http.Handle("/", s)
+
+	if tqPort := os.Getenv("BLANK_TASK_QUEUE_PORT"); len(tqPort) > 0 {
+		listeningPort = tqPort
+	}
+
 	log.Info("Will listen for connection on port ", listeningPort)
 	err = http.ListenAndServe(":"+listeningPort, nil)
 	if err != nil {

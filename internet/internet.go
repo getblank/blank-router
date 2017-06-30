@@ -12,6 +12,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/getblank/uuid"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -124,12 +125,14 @@ func checkJWTHandler(c echo.Context) error {
 }
 
 func facebookLoginHandler(c echo.Context) error {
+	sessionID := uuid.NewV4()
 	t := taskq.Task{
 		Type: taskq.Auth,
 		Arguments: map[string]interface{}{
 			"social":      "facebook",
 			"code":        c.QueryParam("code"),
 			"redirectUrl": c.QueryParam("redirectUrl"),
+			"sessionID":   sessionID,
 		},
 	}
 	res, err := taskq.PushAndGetResult(&t, 0)
@@ -142,7 +145,7 @@ func facebookLoginHandler(c echo.Context) error {
 		return c.HTML(http.StatusInternalServerError, berrors.ErrError.Error())
 	}
 
-	apiKey, err := intranet.NewSession(user)
+	apiKey, err := intranet.NewSession(user, sessionID)
 	if err != nil {
 		return c.HTML(http.StatusInternalServerError, err.Error())
 	}
@@ -205,6 +208,8 @@ func loginHandler(c echo.Context) error {
 		fp[k] = c.FormValue(k)
 	}
 
+	sessionID := uuid.NewV4()
+	fp["sessionID"] = sessionID
 	t := taskq.Task{
 		Type:      taskq.Auth,
 		Arguments: fp,
@@ -219,7 +224,7 @@ func loginHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, berrors.ErrError.Error())
 	}
 
-	accessToken, err := intranet.NewSession(user)
+	accessToken, err := intranet.NewSession(user, sessionID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

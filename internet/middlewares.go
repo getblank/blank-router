@@ -47,7 +47,7 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 				return c.JSON(http.StatusForbidden, ErrSessionNotFound.Error())
 			}
 
-			c.Set("cred", credentials{userID: claims.UserID, sessionID: claims.SessionID, extra: claims.Extra})
+			c.Set("cred", credentials{userID: claims.UserID, sessionID: claims.SessionID, claims: claims})
 			return next(c)
 		}
 	}

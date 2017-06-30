@@ -137,6 +137,10 @@ func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 				"request":  extractRequest(c),
 			},
 		}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			if strings.EqualFold(err.Error(), "not found") {
@@ -201,6 +205,10 @@ func restGetAllDocumentsHandler(storeName string) echo.HandlerFunc {
 				"query": findQuery,
 			},
 		}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			if strings.EqualFold(err.Error(), "not found") {
@@ -241,6 +249,10 @@ func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 				"_id": id,
 			},
 		}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			if strings.EqualFold(err.Error(), "not found") {
@@ -286,6 +298,10 @@ func restPostDocumentHandler(storeName string) echo.HandlerFunc {
 				"item": item,
 			},
 		}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			return c.JSON(http.StatusSeeOther, err.Error())
@@ -334,6 +350,10 @@ func restPutDocumentHandler(storeName string) echo.HandlerFunc {
 				"item": item,
 			},
 		}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 		_, err = taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			return c.JSON(http.StatusSeeOther, err.Error())
@@ -370,6 +390,10 @@ func restDeleteDocumentHandler(storeName string) echo.HandlerFunc {
 				"_id": id,
 			},
 		}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 		_, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			if strings.EqualFold(err.Error(), "not found") {

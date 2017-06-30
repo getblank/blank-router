@@ -25,10 +25,15 @@ func subUserHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 		UserID:    cred.userID,
 		Arguments: map[string]interface{}{"_id": cred.userID},
 	}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return nil, err
 	}
+
 	res = map[string]interface{}{"user": res}
 	return res, intranet.AddSubscription(cred.sessionID, c.ID(), uri, nil)
 }
@@ -45,6 +50,10 @@ func subConfigHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		Type:   taskq.UserConfig,
 		UserID: cred.userID,
 	}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 	log.Debugf("Config request received for client: \"%s\"", c.ID())
 	res, err := taskq.PushAndGetResult(&t, 0)
 	log.Debugf("Config request completed for client: \"%s\"", c.ID())

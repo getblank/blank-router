@@ -220,6 +220,10 @@ func createHTTPActions(storeName string, actions []config.Action) {
 					"actionId": actionID,
 				},
 			}
+			if cred.claims != nil {
+				t.Arguments["tokenInfo"] = cred.claims.toMap()
+			}
+
 			if itemID := c.QueryParam("item-id"); itemID != "" {
 				t.Arguments["itemId"] = itemID
 			}
@@ -378,6 +382,10 @@ func getFileHandler(storeName string) echo.HandlerFunc {
 			Store:     storeName,
 			Arguments: map[string]interface{}{"_id": fileID},
 		}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 		_, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
@@ -415,6 +423,10 @@ func postFileHandler(storeName string) echo.HandlerFunc {
 			Store:     storeName,
 			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID, "name": fileName}},
 		}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 		_, err = taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
@@ -459,6 +471,10 @@ func deleteFileHandler(storeName string) echo.HandlerFunc {
 			Store:     storeName,
 			Arguments: map[string]interface{}{"item": map[string]string{"_id": fileID}},
 		}
+		if cred.claims != nil {
+			t.Arguments["tokenInfo"] = cred.claims.toMap()
+		}
+
 		_, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())

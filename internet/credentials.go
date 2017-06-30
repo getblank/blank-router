@@ -9,7 +9,7 @@ import (
 type credentials struct {
 	userID    interface{}
 	sessionID string
-	extra     map[string]interface{}
+	claims    *blankClaims
 }
 
 func clearBlankToken(c echo.Context) {

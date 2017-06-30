@@ -23,6 +23,25 @@ type blankClaims struct {
 	jwt.StandardClaims
 }
 
+func (b *blankClaims) toMap() map[string]interface{} {
+	res := map[string]interface{}{
+		"_id": b.UserID,
+		"jwtInfo": map[string]interface{}{
+			"userId":    b.UserID,
+			"sessionId": b.SessionID,
+			"issuedAt":  b.IssuedAt,
+			"ussiedBy":  b.Issuer,
+			"expiredAt": b.ExpiresAt,
+		},
+	}
+
+	for k, v := range b.Extra {
+		res[k] = v
+	}
+
+	return res
+}
+
 func (b *blankClaims) UnmarshalJSON(p []byte) error {
 	if b.Extra == nil {
 		b.Extra = map[string]interface{}{}

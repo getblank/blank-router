@@ -4,13 +4,12 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/net/websocket"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/getblank/rgx"
 	"github.com/getblank/wango"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
+	"golang.org/x/net/websocket"
 
 	"github.com/getblank/blank-router/berrors"
 	"github.com/getblank/blank-router/intranet"
@@ -102,17 +101,35 @@ func wampInit() *wango.Wango {
 }
 
 func wampHandler(c echo.Context) error {
-	_cred := c.Get("cred")
-	if _cred == nil {
-		log.Warn("WAMP: no cred in echo context")
-		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+	publicKeyLocker.Lock()
+	if publicRSAKey == nil {
+		publicKeyLocker.Unlock()
+		log.Warn("JWT is not ready yet")
+		return c.JSON(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))
 	}
-	cred, ok := _cred.(credentials)
-	if !ok {
-		log.Warn("WAMP: invalid cred in echo context")
-		return c.JSON(http.StatusForbidden, http.StatusText(http.StatusForbidden))
+	publicKeyLocker.Unlock()
+
+	var canUpgrade bool
+	var cred credentials
+	token := extractToken(c)
+	if token != "" {
+		claims, err := extractClaimsFromJWT(token)
+		if err == nil {
+			_, err = intranet.CheckSession(claims.SessionID)
+			if err == nil {
+				canUpgrade = true
+				cred = credentials{userID: claims.UserID, sessionID: claims.SessionID, claims: claims}
+			}
+		}
 	}
+
 	return echo.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
+		if !canUpgrade {
+			ws.Write([]byte(http.StatusText(http.StatusForbidden)))
+			ws.WriteClose(403)
+			return
+		}
+
 		wamp.WampHandler(ws, cred)
 	}))(c)
 }

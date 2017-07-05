@@ -82,7 +82,7 @@ func Init(version string) {
 	e.GET("/sso-frame", ssoFrameHandler, allowAnyOriginMiddleware())
 
 	wamp = wampInit()
-	e.GET("/wamp", wampHandler, jwtAuthMiddleware(false))
+	e.GET("/wamp", wampHandler)
 
 	e.GET("/common-settings", commonSettingsHandler)
 
@@ -107,6 +107,7 @@ func checkJWTOptionsHandler(c echo.Context) error {
 
 func checkJWTHandler(c echo.Context) error {
 	res := map[string]interface{}{"valid": false}
+	var valid bool
 	publicKeyLocker.Lock()
 	if publicRSAKey == nil {
 		publicKeyLocker.Unlock()
@@ -115,10 +116,26 @@ func checkJWTHandler(c echo.Context) error {
 	}
 	publicKeyLocker.Unlock()
 	if token := extractToken(c); token != "" {
-		if apiKey, _, err := extractAPIKeyAndUserIDromJWT(token); err == nil {
-			if _, err = intranet.CheckSession(apiKey); err == nil {
+		if claims, err := extractClaimsFromJWT(token); err == nil {
+			if _, err = intranet.CheckSession(claims.SessionID); err == nil {
 				res["valid"] = true
+				user := map[string]interface{}{}
+				user["_id"] = claims.UserID
+				for k, v := range claims.Extra {
+					user[k] = v
+				}
+
+				res["user"] = user
+				valid = true
 			}
+		}
+	}
+
+	if !valid {
+		if cookie, err := c.Cookie("access_token"); err == nil {
+			cookie.Value = ""
+			cookie.MaxAge = -1
+			c.SetCookie(cookie)
 		}
 	}
 	return c.JSON(http.StatusOK, res)

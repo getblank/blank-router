@@ -17,7 +17,7 @@ import (
 var (
 	buildTime string
 	gitHash   string
-	version   = "0.1.96"
+	version   = "0.1.97"
 )
 
 func main() {

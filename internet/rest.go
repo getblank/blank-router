@@ -143,10 +143,21 @@ func restActionHandler(storeName, actionID string) echo.HandlerFunc {
 
 		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
-			if strings.EqualFold(err.Error(), "not found") {
-				return c.JSON(http.StatusNotFound, err.Error())
+			errText := err.Error()
+			if strings.EqualFold(errText, "not found") {
+				return c.JSON(http.StatusNotFound, errText)
 			}
-			return c.JSON(http.StatusSeeOther, err.Error())
+
+			fields := strings.SplitN(errText, " ", 2)
+			statusCode := http.StatusInternalServerError
+			if len(fields) > 1 {
+				if i, err := strconv.Atoi(fields[0]); err == nil {
+					statusCode = i
+					errText = fields[1]
+				}
+			}
+
+			return c.JSON(statusCode, errText)
 		}
 		return c.JSON(http.StatusOK, res)
 	}

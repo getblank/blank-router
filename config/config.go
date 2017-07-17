@@ -16,7 +16,8 @@ var (
 
 // Store is a small representation of store in config
 type Store struct {
-	Store          string                 `json:"store"` // just name of the store
+	Version        int                    `json:"version"` // Scheme version
+	Store          string                 `json:"store"`   // just name of the store
 	Type           string                 `json:"type"`
 	Props          interface{}            `json:"props"` // just dummy for props needed when HTTPAPI enabled
 	Actions        []Action               `json:"actions,omitempty"`
@@ -44,14 +45,21 @@ type HTTPHook struct {
 
 // Hooks holds JavaScript code of hooks
 type Hooks struct {
-	WillCreate string `json:"willCreate,omitempty"`
-	DidCreate  string `json:"didCreate,omitempty"`
-	WillSave   string `json:"willSave,omitempty"`
-	DidSave    string `json:"didSave,omitempty"`
-	WillRemove string `json:"willRemove,omitempty"`
-	DidRemove  string `json:"didRemove,omitempty"`
-	DidRead    string `json:"didRead,omitempty"`
-	DidStart   string `json:"didStart,omitempty"`
+	WillCreate string           `json:"willCreate,omitempty"`
+	DidCreate  string           `json:"didCreate,omitempty"`
+	WillSave   string           `json:"willSave,omitempty"`
+	DidSave    string           `json:"didSave,omitempty"`
+	WillRemove string           `json:"willRemove,omitempty"`
+	DidRemove  string           `json:"didRemove,omitempty"`
+	DidRead    string           `json:"didRead,omitempty"`
+	DidStart   string           `json:"didStart,omitempty"`
+	Migration  []*MigrationTask `json:"migration,omitempty"`
+}
+
+// MigrationTask describes scheme migration scripts
+type MigrationTask struct {
+	Version int    `json:"version"`
+	Script  string `json:"script"`
 }
 
 // ServerSettings used to hold several server settings

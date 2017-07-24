@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getblank/blank-router/config"
 	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
 
@@ -99,7 +100,9 @@ func loggerMiddleware() echo.MiddlewareFunc {
 func serverHeadersMiddleware(version string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			c.Response().Header().Add("Server", "Blank Router/"+version+" (https://getblank.net)")
+			commit, buildTime := config.GetVersion()
+			versionString := fmt.Sprintf("Blank Router/%s (https://getblank.net). Config build time: %s, git hash: %s.", version, buildTime, commit)
+			c.Response().Header().Add("Server", versionString)
 			return next(c)
 		}
 	}

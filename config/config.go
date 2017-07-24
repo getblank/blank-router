@@ -12,6 +12,8 @@ var (
 	serverSettings  = ServerSettings{}
 	locker          sync.RWMutex
 	onUpdateHandler func(map[string]Store)
+	commit          string
+	buildTime       string
 )
 
 // Store is a small representation of store in config
@@ -67,6 +69,19 @@ type ServerSettings struct {
 	SSOOrigins []string `json:"ssoOrigins,omitempty"`
 }
 
+// ServerSettings used to hold several server settings
+type CommonSettings struct {
+	Commit    string `json:"commit"`
+	BuildTime string `json:"buildTime"`
+}
+
+func GetVersion() (string, string) {
+	locker.RLock()
+	defer locker.RUnlock()
+
+	return commit, buildTime
+}
+
 // GetSSOOrigins returns configured SSO origins
 func GetSSOOrigins() []string {
 	locker.Lock()
@@ -86,6 +101,7 @@ func Update(c map[string]Store) {
 	if onUpdateHandler != nil {
 		onUpdateHandler(clone(c))
 	}
+
 	if s, ok := conf["_serverSettings"]; ok {
 		encoded, err := json.Marshal(s.Entries)
 		if err != nil {
@@ -99,6 +115,24 @@ func Update(c map[string]Store) {
 			return
 		}
 		serverSettings = se
+	}
+
+	if s, ok := conf["_commonSettings"]; ok {
+		encoded, err := json.Marshal(s.Entries)
+		if err != nil {
+			log.Error("Can't marshal common settings", err)
+			return
+		}
+
+		ce := CommonSettings{}
+		err = json.Unmarshal(encoded, &ce)
+		if err != nil {
+			log.Error("Can't unmarshal common settings", err)
+			return
+		}
+
+		commit = ce.Commit
+		buildTime = ce.BuildTime
 	}
 }
 

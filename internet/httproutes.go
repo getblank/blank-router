@@ -177,13 +177,17 @@ func createFileHandlers(storeName string) {
 	log.Infof("Created handlers for fileStore '%s' with path %s:id", storeName, groupURI)
 }
 
-func writeFileFromFileStore(c echo.Context, storeName, fileID string) error {
+func writeFileFromFileStore(c echo.Context, storeName, fileID, fileName string) error {
 	res, err := http.Get(settings.GetFileStoreAddress() + "/" + storeName + "/" + fileID)
 	if err != nil {
 		return c.JSON(res.StatusCode, res.Status)
 	}
+
 	defer res.Body.Close()
-	fileName := res.Header.Get("file-name")
+	if len(fileName) == 0 {
+		fileName = res.Header.Get("file-name")
+	}
+
 	c.Response().Header().Add("Content-Type", getContentType(fileName))
 	c.Response().Header().Set(echo.HeaderContentDisposition, "attachment; filename="+fileName)
 	body, _ := ioutil.ReadAll(res.Body)
@@ -335,8 +339,9 @@ func defaultResponse(res *result, c echo.Context) error {
 		return c.XMLBlob(code, []byte(res.Data))
 	case "file":
 		if res.Store != "" && res.ID != "" {
-			return writeFileFromFileStore(c, res.Store, res.ID)
+			return writeFileFromFileStore(c, res.Store, res.ID, res.FileName)
 		}
+
 		buffer, err := base64.StdEncoding.DecodeString(res.Data)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, "can't decode file")
@@ -390,7 +395,8 @@ func getFileHandler(storeName string) echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
-		writeFileFromFileStore(c, storeName, fileID)
+
+		writeFileFromFileStore(c, storeName, fileID, "")
 		return nil
 	}
 }

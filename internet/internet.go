@@ -114,6 +114,7 @@ func checkJWTHandler(c echo.Context) error {
 		log.Warn("JWT is not ready yet")
 		return c.JSON(http.StatusOK, res)
 	}
+
 	publicKeyLocker.Unlock()
 	if token := extractToken(c); token != "" {
 		if claims, err := extractClaimsFromJWT(token); err == nil {
@@ -137,7 +138,10 @@ func checkJWTHandler(c echo.Context) error {
 			cookie.MaxAge = -1
 			c.SetCookie(cookie)
 		}
+
+		return c.JSON(http.StatusForbidden, res)
 	}
+
 	return c.JSON(http.StatusOK, res)
 }
 

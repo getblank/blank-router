@@ -37,7 +37,8 @@ var (
 	w      = wango.New()
 	wamp   *wango.Wango
 
-	errUnknownMethod = errors.New("method unknown")
+	errUnknownMethod      = errors.New("method unknown")
+	forbiddenMessageBytes = []byte(`[403,"Forbidden"]`)
 )
 
 func wampInit() *wango.Wango {
@@ -125,7 +126,7 @@ func wampHandler(c echo.Context) error {
 
 	return echo.WrapHandler(websocket.Handler(func(ws *websocket.Conn) {
 		if !canUpgrade {
-			ws.Write([]byte(http.StatusText(http.StatusForbidden)))
+			ws.Write(forbiddenMessageBytes)
 			ws.WriteClose(403)
 			return
 		}

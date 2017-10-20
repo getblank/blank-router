@@ -52,52 +52,52 @@ func createRESTAPIForStore(store config.Store) {
 	lowerBaseURI := strings.ToLower(baseURI)
 
 	e.GET(baseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-	log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET all REST method %s", baseURI)
+	log.WithFields(log.Fields{"store": store.Store}).Debugf("Created GET all REST method %s", baseURI)
 
 	if baseURI != lowerBaseURI {
 		e.GET(lowerBaseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-		log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET all REST method %s", lowerBaseURI)
+		log.WithFields(log.Fields{"store": store.Store}).Debugf("Created GET all REST method %s", lowerBaseURI)
 	}
 
 	e.POST(baseURI, restPostDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-	log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST REST method %s", baseURI)
+	log.WithFields(log.Fields{"store": store.Store}).Debugf("Created POST REST method %s", baseURI)
 
 	if baseURI != lowerBaseURI {
 		e.POST(lowerBaseURI, restPostDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST REST method %s", lowerBaseURI)
+		log.WithFields(log.Fields{"store": store.Store}).Debugf("Created POST REST method %s", lowerBaseURI)
 	}
 
 	itemURI := baseURI + "/:id"
 	lowerItemURI := lowerBaseURI + "/:id"
 	e.GET(itemURI, restGetDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-	log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET REST method %s", itemURI)
+	log.WithFields(log.Fields{"store": store.Store}).Debugf("Created GET REST method %s", itemURI)
 	if itemURI != lowerItemURI {
 		e.GET(lowerItemURI, restGetDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-		log.WithFields(log.Fields{"store": store.Store}).Infof("Created GET REST method %s", lowerItemURI)
+		log.WithFields(log.Fields{"store": store.Store}).Debugf("Created GET REST method %s", lowerItemURI)
 	}
 
 	e.PUT(itemURI, restPutDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-	log.WithFields(log.Fields{"store": store.Store}).Infof("Created PUT REST method %s", itemURI)
+	log.WithFields(log.Fields{"store": store.Store}).Debugf("Created PUT REST method %s", itemURI)
 	if itemURI != lowerItemURI {
 		e.PUT(lowerItemURI, restPutDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-		log.WithFields(log.Fields{"store": store.Store}).Infof("Created PUT REST method %s", lowerItemURI)
+		log.WithFields(log.Fields{"store": store.Store}).Debugf("Created PUT REST method %s", lowerItemURI)
 	}
 
 	e.DELETE(itemURI, restDeleteDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-	log.WithFields(log.Fields{"store": store.Store}).Infof("Created DELETE REST method %s", itemURI)
+	log.WithFields(log.Fields{"store": store.Store}).Debugf("Created DELETE REST method %s", itemURI)
 	if itemURI != lowerItemURI {
 		e.DELETE(lowerItemURI, restDeleteDocumentHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-		log.WithFields(log.Fields{"store": store.Store}).Infof("Created DELETE REST method %s", lowerItemURI)
+		log.WithFields(log.Fields{"store": store.Store}).Debugf("Created DELETE REST method %s", lowerItemURI)
 	}
 
 	for _, a := range store.Actions {
 		actionURI := itemURI + "/" + a.ID
 		lowerActionURI := lowerItemURI + "/" + a.ID
 		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST action REST method %s", actionURI)
+		log.WithFields(log.Fields{"store": store.Store}).Debugf("Created POST action REST method %s", actionURI)
 		if actionURI != lowerActionURI {
 			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-			log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST action REST method %s", lowerActionURI)
+			log.WithFields(log.Fields{"store": store.Store}).Debugf("Created POST action REST method %s", lowerActionURI)
 		}
 	}
 
@@ -105,10 +105,10 @@ func createRESTAPIForStore(store config.Store) {
 		actionURI := baseURI + "/" + a.ID
 		lowerActionURI := lowerBaseURI + "/" + a.ID
 		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-		log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST storeAction REST method %s", actionURI)
+		log.WithFields(log.Fields{"store": store.Store}).Debugf("Created POST storeAction REST method %s", actionURI)
 		if actionURI != lowerActionURI {
 			e.POST(lowerActionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
-			log.WithFields(log.Fields{"store": store.Store}).Infof("Created POST storeAction REST method %s", lowerActionURI)
+			log.WithFields(log.Fields{"store": store.Store}).Debugf("Created POST storeAction REST method %s", lowerActionURI)
 		}
 	}
 }

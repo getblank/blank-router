@@ -2,7 +2,7 @@ language: go
 os:
   - linux
 go:
-  - 1.8.1
+  - 1.9
 script:
   - go test ./...
 after_success:

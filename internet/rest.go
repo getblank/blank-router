@@ -92,7 +92,7 @@ func createRESTAPIForStore(store config.Store) {
 
 	for _, a := range store.Actions {
 		actionURI := itemURI + "/" + a.ID
-		lowerActionURI := lowerItemURI + "/" + a.ID
+		lowerActionURI := lowerItemURI + "/" + strings.ToLower(a.ID)
 		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 		log.WithFields(log.Fields{"store": store.Store}).Debugf("Created POST action REST method %s", actionURI)
 		if actionURI != lowerActionURI {
@@ -103,7 +103,7 @@ func createRESTAPIForStore(store config.Store) {
 
 	for _, a := range store.StoreActions {
 		actionURI := baseURI + "/" + a.ID
-		lowerActionURI := lowerBaseURI + "/" + a.ID
+		lowerActionURI := lowerBaseURI + "/" + strings.ToLower(a.ID)
 		e.POST(actionURI, restActionHandler(store.Store, a.ID), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
 		log.WithFields(log.Fields{"store": store.Store}).Debugf("Created POST storeAction REST method %s", actionURI)
 		if actionURI != lowerActionURI {

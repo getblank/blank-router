@@ -332,31 +332,21 @@ func logoutHandler(c echo.Context) error {
 }
 
 func registerHandler(c echo.Context) error {
-	email := c.FormValue("email")
-	if email == "" {
-		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
-	}
-	password := c.FormValue("password")
-	if password == "" {
-		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
-	}
-	t := taskq.Task{
-		Type: taskq.SignUp,
-		Arguments: map[string]interface{}{
-			"email":       email,
-			"password":    password,
-			"redirectUrl": c.QueryParam("redirectUrl"),
-		},
-	}
 	formParams, err := c.FormParams()
-	if err == nil && len(formParams) > 2 {
-		for k, v := range formParams {
-			if k == "email" || k == "password" || len(v) == 0 {
-				continue
-			}
-			t.Arguments[k] = v[0]
-		}
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
 	}
+
+	args := map[string]interface{}{"redirectUrl": c.QueryParam("redirectUrl")}
+	for k := range formParams {
+		args[k] = c.FormValue(k)
+	}
+
+	t := taskq.Task{
+		Type:      taskq.SignUp,
+		Arguments: args,
+	}
+
 	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -425,28 +415,27 @@ func sendResetLinkHTTPHandler(c echo.Context) error {
 }
 
 func resetPasswordHTTPHandler(c echo.Context) error {
-	token := c.FormValue("token")
-	if token == "" {
-		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
-	}
-	password := c.FormValue("password")
-	if password == "" {
+	formParams, err := c.FormParams()
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, berrors.ErrInvalidArguments.Error())
 	}
 
-	t := taskq.Task{
-		Type: taskq.PasswordReset,
-		Arguments: map[string]interface{}{
-			"token":    token,
-			"password": password,
-		},
+	args := map[string]interface{}{}
+	for k := range formParams {
+		args[k] = c.FormValue(k)
 	}
+
+	t := taskq.Task{
+		Type:      taskq.PasswordReset,
+		Arguments: args,
+	}
+
 	res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return c.JSON(http.StatusSeeOther, err.Error())
 	}
-	return c.JSON(http.StatusOK, res)
 
+	return c.JSON(http.StatusOK, res)
 }
 
 func commonSettingsHandler(c echo.Context) error {

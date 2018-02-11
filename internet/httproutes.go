@@ -331,9 +331,11 @@ func defaultResponse(res *result, c echo.Context) error {
 	if code == 0 {
 		code = http.StatusOK
 	}
+
 	for k, v := range res.Header {
 		c.Response().Header().Set(k, v)
 	}
+
 	switch res.Type {
 	case "REDIRECT", "redirect":
 		if code == 200 {
@@ -350,7 +352,7 @@ func defaultResponse(res *result, c echo.Context) error {
 	case "XML", "xml":
 		return c.XMLBlob(code, []byte(res.Data))
 	case "file":
-		if res.Store != "" && res.ID != "" {
+		if len(res.Store) > 0 && len(res.ID) > 0 {
 			return writeFileFromFileStore(c, res.Store, res.ID, res.FileName)
 		}
 
@@ -358,8 +360,10 @@ func defaultResponse(res *result, c echo.Context) error {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, "can't decode file")
 		}
+
 		c.Response().Header().Set(echo.HeaderContentDisposition, "attachment; filename="+res.FileName)
-		return c.Blob(200, getContentType(res.FileName), buffer)
+
+		return c.Blob(200, detectContentType(res.FileName, buffer), buffer)
 		// return c.ServeContent(bytes.NewReader(buffer), res.FileName, time.Now())
 	default:
 		return c.JSON(http.StatusSeeOther, "unknown encoding type")

@@ -3,9 +3,11 @@ package internet
 import (
 	"crypto/rsa"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -492,7 +494,11 @@ func assetsHandler(c echo.Context) error {
 }
 
 func getContentType(uri string) string {
-	var contentType string
+	contentType := mime.TypeByExtension(filepath.Ext(uri))
+	if len(contentType) > 0 {
+		return contentType
+	}
+
 	switch path.Ext(uri) {
 	case ".js":
 		contentType = "text/javascript"
@@ -528,5 +534,15 @@ func getContentType(uri string) string {
 	default:
 		contentType = "multipart/mixed"
 	}
+
 	return contentType
+}
+
+func detectContentType(fileName string, content []byte) string {
+	ctype := mime.TypeByExtension(filepath.Ext(fileName))
+	if ctype == "" {
+		ctype = http.DetectContentType(content)
+	}
+
+	return ctype
 }

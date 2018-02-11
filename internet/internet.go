@@ -58,6 +58,7 @@ func Init(version string) {
 			return next(c)
 		}
 	})
+
 	assetsGroup.GET("/*", assetsHandler)
 	e.GET("/public-key", func(c echo.Context) error {
 		publicKeyLocker.RLock()
@@ -91,10 +92,12 @@ func Init(version string) {
 	intranet.OnEvent(func(uri string, event interface{}, connIDs []string) {
 		w.SendEvent(uri, event, connIDs)
 	})
+
 	if certFile, keyFile := os.Getenv("BLANK_SSL_CRT"), os.Getenv("BLANK_SSL_KEY"); certFile != "" && keyFile != "" {
 		log.Info("Starting internet server with SSL on port ", port)
 		e.StartTLS(":"+port, certFile, keyFile)
 	}
+
 	log.Info("Starting internet server on port ", port)
 	log.Fatal(e.Start(":" + port))
 }

@@ -188,10 +188,20 @@ func writeFileFromFileStore(c echo.Context, storeName, fileID, fileName string) 
 		fileName = res.Header.Get("file-name")
 	}
 
-	c.Response().Header().Add("Content-Type", getContentType(fileName))
+	for k, v := range res.Header {
+		if k == "file-name" {
+			continue
+		}
+
+		for _, h := range v {
+			c.Response().Header().Add(k, h)
+		}
+	}
+
 	c.Response().Header().Set(echo.HeaderContentDisposition, "attachment; filename="+fileName)
 	body, _ := ioutil.ReadAll(res.Body)
 	_, err = c.Response().Write(body)
+
 	return err
 }
 
@@ -202,6 +212,7 @@ func createHTTPActions(storeName string, actions []config.Action) {
 		if v.Type != "http" {
 			continue
 		}
+
 		actionID := v.ID
 		group.GET(actionID, func(c echo.Context) error {
 			_cred := c.Get("cred")
@@ -250,6 +261,7 @@ func extractRequest(c echo.Context) map[string]interface{} {
 	for _, p := range c.ParamNames() {
 		params[p] = c.Param(p)
 	}
+
 	header := map[string]string{}
 	for k, v := range c.Request().Header {
 		if len(v) > 0 {

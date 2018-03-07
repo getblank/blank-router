@@ -26,19 +26,23 @@ func createRESTAPI(httpEnabledStores []config.Store) {
 				"data":     httpEnabledStores,
 			},
 		}
+
 		res, err := taskq.PushAndGetResult(&t, 0)
 		if err != nil {
-			log.WithError(err).Error("Can't compile REST docs")
+			log.WithError(err).Errorf("Can't compile REST docs, error: %v", err)
 			return
 		}
+
 		html, ok := res.(string)
 		if !ok {
 			log.WithField("html", res).Error("Invalid response type from doc compiler")
 			return
 		}
+
 		e.GET(apiV1baseURI[:len(apiV1baseURI)-1], func(c echo.Context) error {
 			return c.HTML(http.StatusOK, html)
 		})
+
 		log.Info("REST API Documentation generated")
 	}
 

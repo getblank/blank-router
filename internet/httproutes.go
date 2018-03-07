@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -35,6 +36,7 @@ type result struct {
 	Code     int               `json:"code"`
 	Header   map[string]string `json:"header"`
 	FileName string            `json:"fileName"`
+	FilePath string            `json:"filePath"`
 	Store    string            `json:"store"`
 	ID       string            `json:"_id"`
 }
@@ -352,22 +354,32 @@ func defaultResponse(res *result, c echo.Context) error {
 	case "XML", "xml":
 		return c.XMLBlob(code, []byte(res.Data))
 	case "file":
-		if len(res.Store) > 0 && len(res.ID) > 0 {
-			return writeFileFromFileStore(c, res.Store, res.ID, res.FileName)
-		}
-
-		buffer, err := base64.StdEncoding.DecodeString(res.Data)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "can't decode file")
-		}
-
-		c.Response().Header().Set(echo.HeaderContentDisposition, "attachment; filename="+res.FileName)
-
-		return c.Blob(200, detectContentType(res.FileName, buffer), buffer)
-		// return c.ServeContent(bytes.NewReader(buffer), res.FileName, time.Now())
+		return responseFile(res, c)
 	default:
 		return c.JSON(http.StatusSeeOther, "unknown encoding type")
 	}
+}
+
+func responseFile(res *result, c echo.Context) error {
+	if len(res.Store) > 0 && len(res.ID) > 0 {
+		return writeFileFromFileStore(c, res.Store, res.ID, res.FileName)
+	}
+
+	var buffer []byte
+	var err error
+	if len(res.FilePath) > 0 {
+		buffer, err = ioutil.ReadFile(res.FilePath)
+	} else {
+		buffer, err = base64.StdEncoding.DecodeString(res.Data)
+	}
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("can't read file, error: %v", err))
+	}
+
+	c.Response().Header().Set(echo.HeaderContentDisposition, "attachment; filename="+res.FileName)
+
+	return c.Blob(200, detectContentType(res.FileName, buffer), buffer)
 }
 
 func parseResult(_res interface{}) (*result, error) {

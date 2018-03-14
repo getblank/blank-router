@@ -41,9 +41,11 @@ func CheckSession(apiKey string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	userID, ok := res.(string)
 	if !ok {
 		log.WithField("result", res).Warn("Invalid type of result on new session")
+
 		return "", berrors.ErrError
 	}
 

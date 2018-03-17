@@ -12,7 +12,6 @@ import (
 	"golang.org/x/net/websocket"
 
 	"github.com/getblank/blank-router/berrors"
-	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/taskq"
 )
 
@@ -116,7 +115,7 @@ func wampHandler(c echo.Context) error {
 	if token != "" {
 		claims, err := extractClaimsFromJWT(token)
 		if err == nil {
-			_, err = intranet.CheckSession(claims.SessionID)
+			_, err = srClient.CheckSession(claims.SessionID)
 			if err == nil {
 				canUpgrade = true
 				cred = credentials{userID: claims.UserID, sessionID: claims.SessionID, claims: claims}
@@ -150,7 +149,7 @@ func sessionCloseCallback(c *wango.Conn) {
 		return
 	}
 	log.WithFields(log.Fields{"connId": c.ID(), "apiKey": cred.sessionID, "userId": cred.userID}).Info("User disconnected")
-	err := intranet.DeleteConnection(cred.sessionID, c.ID())
+	err := srClient.DeleteConnection(cred.sessionID, c.ID())
 	if err != nil {
 		log.WithError(err).Error("Can't delete connection when session closed")
 	}
@@ -176,7 +175,7 @@ func actionHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 			log.WithField("extra", extra).Warn("Invalid type of extra on connection when rpx handler")
 			return nil, berrors.ErrError
 		}
-		_, err := intranet.CheckSession(cred.sessionID)
+		_, err := srClient.CheckSession(cred.sessionID)
 		if err != nil {
 			return nil, berrors.ErrForbidden
 		}
@@ -291,7 +290,7 @@ func signOutHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 		log.WithField("extra", extra).Warn("Extra is invalid type")
 		return nil, berrors.ErrError
 	}
-	err := intranet.DeleteSession(cred.sessionID)
+	err := srClient.DeleteSession(cred.sessionID)
 	c.SetExtra(nil)
 	return nil, err
 }
@@ -336,7 +335,7 @@ func rgxRPCHandler(c *wango.Conn, uri string, args ...interface{}) (interface{},
 			log.WithField("extra", extra).Warn("Invalid type of extra on connection when rpx handler")
 			return nil, berrors.ErrError
 		}
-		_, err := intranet.CheckSession(cred.sessionID)
+		_, err := srClient.CheckSession(cred.sessionID)
 		if err != nil {
 			return nil, berrors.ErrForbidden
 		}

@@ -4,7 +4,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/getblank/blank-router/berrors"
-	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/taskq"
 	"github.com/getblank/wango"
 )
@@ -35,7 +34,7 @@ func subUserHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 	}
 
 	res = map[string]interface{}{"user": res}
-	return res, intranet.AddSubscription(cred.sessionID, c.ID(), uri, nil)
+	return res, srClient.AddSubscription(cred.sessionID, c.ID(), uri, nil)
 }
 
 func subConfigHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -81,7 +80,7 @@ func subStoresHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 	if len(args) > 0 {
 		data = args[0]
 	}
-	return nil, intranet.AddSubscription(cred.sessionID, c.ID(), uri, data)
+	return nil, srClient.AddSubscription(cred.sessionID, c.ID(), uri, data)
 }
 
 func unsubStoresHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}, error) {
@@ -94,5 +93,5 @@ func unsubStoresHandler(c *wango.Conn, uri string, args ...interface{}) (interfa
 		log.WithField("extra", extra).Warn("Invalid type of extra on connection when unsub stores handler")
 		return nil, berrors.ErrError
 	}
-	return nil, intranet.DeleteSubscription(cred.sessionID, c.ID(), uri)
+	return nil, srClient.DeleteSubscription(cred.sessionID, c.ID(), uri)
 }

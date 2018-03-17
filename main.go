@@ -12,12 +12,13 @@ import (
 	"github.com/getblank/blank-router/internet"
 	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
+	"github.com/getblank/blank-router/sr"
 )
 
 var (
 	buildTime string
 	gitHash   string
-	version   = "0.1.107"
+	version   = "0.2.0"
 )
 
 func main() {
@@ -48,7 +49,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "router",
 		Short: "Router for Blank platform",
-		Long:  "The next generation of web applications. This is the router subsytem.",
+		Long:  "This is the router subsystem for Blank platform.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if *verFlag {
 				printVersion()
@@ -67,8 +68,8 @@ func main() {
 			log.Info("Router started")
 			settings.SRAddress = *srAddress
 			settings.SRHTTPAddress = "http:" + strings.TrimPrefix(*srAddress, "ws:")
-			go internet.Init(version)
-			intranet.Init()
+			go internet.Init(sr.SR(), version)
+			intranet.Init(true)
 		},
 	}
 	srAddress = rootCmd.PersistentFlags().StringP("service-registry", "s", "ws://localhost:1234", "Service registry uri")

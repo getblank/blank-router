@@ -32,10 +32,23 @@ var (
 	publicPemKey    []byte
 	publicRSAKey    *rsa.PublicKey
 	publicKeyLocker sync.RWMutex
+
+	srClient SRClient
 )
 
+type SRClient interface {
+	CheckSession(apiKey string) (string, error)
+	DeleteSession(apiKey string) error
+	NewSession(user interface{}, sessionID string) (string, error)
+	AddSubscription(apiKey, connID, uri string, extra interface{}) error
+	DeleteConnection(apiKey, connID string) error
+	DeleteSubscription(apiKey, connID, uri string) error
+}
+
 // Init starts internet http server
-func Init(version string) {
+func Init(srCl SRClient, version string) {
+	srClient = srCl
+
 	if p := os.Getenv("BLANK_HTTP_PORT"); p != "" {
 		port = p
 	}
@@ -123,7 +136,7 @@ func checkJWTHandler(c echo.Context) error {
 	publicKeyLocker.Unlock()
 	if token := extractToken(c); token != "" {
 		if claims, err := extractClaimsFromJWT(token); err == nil {
-			if _, err = intranet.CheckSession(claims.SessionID); err == nil {
+			if _, err = srClient.CheckSession(claims.SessionID); err == nil {
 				res["valid"] = true
 				user := map[string]interface{}{}
 				user["_id"] = claims.UserID
@@ -171,7 +184,7 @@ func facebookLoginHandler(c echo.Context) error {
 		return c.HTML(http.StatusInternalServerError, berrors.ErrError.Error())
 	}
 
-	apiKey, err := intranet.NewSession(user, sessionID)
+	apiKey, err := srClient.NewSession(user, sessionID)
 	if err != nil {
 		return c.HTML(http.StatusInternalServerError, err.Error())
 	}
@@ -250,7 +263,7 @@ func loginHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, berrors.ErrError.Error())
 	}
 
-	accessToken, err := intranet.NewSession(user, sessionID)
+	accessToken, err := srClient.NewSession(user, sessionID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -304,13 +317,13 @@ func logoutHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	_, err = intranet.CheckSession(apiKey)
+	_, err = srClient.CheckSession(apiKey)
 	if err != nil {
-		log.Warnf("intranet.CheckSession for apiKey %s error: %v", apiKey, err)
+		log.Warnf("srClient.CheckSession for apiKey %s error: %v", apiKey, err)
 		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 	}
 
-	err = intranet.DeleteSession(apiKey)
+	err = srClient.DeleteSession(apiKey)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

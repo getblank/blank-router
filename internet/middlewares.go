@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/getblank/blank-router/config"
-	"github.com/getblank/blank-router/intranet"
 	"github.com/getblank/blank-router/settings"
 
 	log "github.com/Sirupsen/logrus"
@@ -45,7 +44,7 @@ func jwtAuthMiddleware(allowGuests bool) echo.MiddlewareFunc {
 				return c.JSON(http.StatusForbidden, err.Error())
 			}
 
-			_, err = intranet.CheckSession(claims.SessionID)
+			_, err = srClient.CheckSession(claims.SessionID)
 			if err != nil {
 				return c.JSON(http.StatusForbidden, ErrSessionNotFound.Error())
 			}

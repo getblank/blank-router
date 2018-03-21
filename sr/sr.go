@@ -17,7 +17,7 @@ func (*SessionRegistry) DeleteSession(apiKey string) error {
 }
 
 // NewSession creates a new session in serviceRegistry
-func (*SessionRegistry) NewSession(user interface{}, sessionID string) (string, error) {
+func (*SessionRegistry) NewSession(user map[string]interface{}, sessionID string) (string, error) {
 	return intranet.NewSession(user, sessionID)
 }
 

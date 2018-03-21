@@ -39,7 +39,7 @@ var (
 type SRClient interface {
 	CheckSession(apiKey string) (string, error)
 	DeleteSession(apiKey string) error
-	NewSession(user interface{}, sessionID string) (string, error)
+	NewSession(user map[string]interface{}, sessionID string) (string, error)
 	AddSubscription(apiKey, connID, uri string, extra interface{}) error
 	DeleteConnection(apiKey, connID string) error
 	DeleteSubscription(apiKey, connID, uri string) error

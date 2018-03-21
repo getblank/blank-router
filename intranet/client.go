@@ -60,7 +60,7 @@ func DeleteSession(apiKey string) error {
 }
 
 // NewSession creates a new session in serviceRegistry
-func NewSession(user interface{}, sessionID string) (string, error) {
+func NewSession(user map[string]interface{}, sessionID string) (string, error) {
 	res, err := call(uriNewSession, user, sessionID)
 	if err != nil {
 		return "", err

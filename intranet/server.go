@@ -48,6 +48,7 @@ func taskGetHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 
 	taskq.UnShift(t)
 	log.Debugf("Shifted task id: \"%d\" type: \"%s\" returned to the queue because client \"%s\" already disconnected", t.ID, t.Type, c.ID())
+
 	return nil, nil
 }
 
@@ -56,19 +57,23 @@ func taskDoneHandler(c *wango.Conn, uri string, args ...interface{}) (interface{
 		log.WithField("argumentsLength", len(args)).Warn("Invalid task.done RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	id, ok := args[0].(float64)
 	if !ok {
 		log.WithField("taskId", args[0]).Warn("Invalid task.id in task.done RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	log.Debugf("Task done id: \"%d\" from client \"%s\"", int(id), c.ID())
 
 	result := taskq.Result{
 		ID:     uint64(id),
 		Result: args[1],
 	}
+
 	taskq.Done(result)
 	taskWatchChan <- taskKeeper{c.ID(), uint64(id), true}
+
 	return nil, nil
 }
 
@@ -77,23 +82,28 @@ func taskErrorHandler(c *wango.Conn, uri string, args ...interface{}) (interface
 		log.WithField("argumentsLength", len(args)).Warn("Invalid task.error RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	id, ok := args[0].(float64)
 	if !ok {
 		log.WithField("taskId", args[0]).Warn("Invalid task.id in task.error RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	err, ok := args[1].(string)
 	if !ok {
 		log.WithField("error", args[1]).Warn("Invalid description in task.error RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	log.Debugf("Task error id: \"%d\" err: \"%s\" from client \"%s\"", int(id), err, c.ID())
 	result := taskq.Result{
 		ID:  uint64(id),
 		Err: err,
 	}
+
 	taskq.Done(result)
 	taskWatchChan <- taskKeeper{c.ID(), uint64(id), true}
+
 	return nil, nil
 }
 
@@ -102,16 +112,19 @@ func cronRunHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 		log.WithField("argumentsLength", len(args)).Warn("Invalid cron.run RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	storeName, ok := args[0].(string)
 	if !ok {
 		log.WithField("storeName", args[0]).Warn("Invalid storeName when cron.run RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	index, ok := args[1].(float64)
 	if !ok {
 		log.WithField("index", args[1]).Warn("Invalid task index when cron.run RPC")
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	t := taskq.Task{
 		Type:   taskq.ScheduledScript,
 		Store:  storeName,
@@ -120,12 +133,14 @@ func cronRunHandler(c *wango.Conn, uri string, args ...interface{}) (interface{}
 			"taskIndex": index,
 		},
 	}
+
 	resChan := taskq.Push(&t)
 
 	res := <-resChan
 	if res.Err != "" {
 		return nil, errors.New(res.Err)
 	}
+
 	return res.Result, nil
 }
 
@@ -145,16 +160,19 @@ func publishHandler(c *wango.Conn, _uri string, args ...interface{}) (interface{
 	if len(args) < 3 {
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	uri, ok := args[0].(string)
 	if !ok {
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	wampServer.Publish(uri, args[1])
 
 	_subscribers, ok := args[2].([]interface{})
 	if !ok {
 		return nil, berrors.ErrInvalidArguments
 	}
+
 	subscribers := make([]string, len(_subscribers))
 	for k, v := range _subscribers {
 		connID, ok := v.(string)
@@ -164,6 +182,7 @@ func publishHandler(c *wango.Conn, _uri string, args ...interface{}) (interface{
 		}
 		subscribers[k] = connID
 	}
+
 	onEventHandler(uri, args[1], subscribers)
 
 	return nil, nil
@@ -180,17 +199,21 @@ func subStoresHandler(c *wango.Conn, _uri string, args ...interface{}) (interfac
 			"take":  1,
 		},
 	}
+
 	_res, err := taskq.PushAndGetResult(&t, 0)
 	if err != nil {
 		return nil, err
 	}
+
 	result := map[string]interface{}{"event": "init", "data": nil}
 	res, ok := _res.(map[string]interface{})
 	if !ok {
 		result["data"] = _res
 		return result, nil
 	}
+
 	result["data"] = res["items"]
+
 	return result, nil
 }
 
@@ -236,18 +259,22 @@ func runServer() {
 	if err != nil {
 		panic(err)
 	}
+
 	err = wampServer.RegisterRPCHandler(doneTaskURI, taskDoneHandler)
 	if err != nil {
 		panic(err)
 	}
+
 	err = wampServer.RegisterRPCHandler(errorTaskURI, taskErrorHandler)
 	if err != nil {
 		panic(err)
 	}
+
 	err = wampServer.RegisterRPCHandler(publishURI, publishHandler)
 	if err != nil {
 		panic(err)
 	}
+
 	err = wampServer.RegisterRPCHandler(cronRunURI, cronRunHandler)
 	if err != nil {
 		panic(err)
@@ -262,6 +289,7 @@ func runServer() {
 	s.Handshake = func(c *websocket.Config, r *http.Request) error {
 		return nil
 	}
+
 	s.Handler = func(ws *websocket.Conn) {
 		wampServer.WampHandler(ws, nil)
 	}

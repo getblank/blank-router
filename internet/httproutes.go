@@ -333,6 +333,10 @@ func extractIP(c echo.Context) string {
 }
 
 func defaultResponse(res *result, c echo.Context) error {
+	if res == nil {
+		return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
+	}
+
 	code := res.Code
 	if code == 0 {
 		code = http.StatusOK
@@ -387,15 +391,21 @@ func responseFile(res *result, c echo.Context) error {
 }
 
 func parseResult(_res interface{}) (*result, error) {
+	if _res == nil {
+		return nil, nil
+	}
+
 	encoded, err := json.Marshal(_res)
 	if err != nil {
 		return nil, errors.Wrap(err, "when parse result")
 	}
+
 	res := new(result)
 	err = json.Unmarshal(encoded, res)
 	if err != nil {
 		err = errors.Wrap(err, "when unmarshal result")
 	}
+
 	return res, err
 }
 

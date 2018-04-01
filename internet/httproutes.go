@@ -211,12 +211,9 @@ func createHTTPActions(storeName string, actions []config.Action) {
 	groupURI := "/actions/" + storeName + "/"
 	group := e.Group(groupURI)
 	for _, v := range actions {
-		if v.Type != "http" {
-			continue
-		}
-
 		actionID := v.ID
-		group.GET(actionID, func(c echo.Context) error {
+
+		handler := func(c echo.Context) error {
 			_cred := c.Get("cred")
 			if _cred == nil {
 				log.Warn("HTTP ACTION: no cred in echo context")
@@ -253,7 +250,14 @@ func createHTTPActions(storeName string, actions []config.Action) {
 				return c.JSON(http.StatusInternalServerError, err.Error())
 			}
 			return defaultResponse(res, c)
-		}, jwtAuthMiddleware(false))
+		}
+
+		if v.Type == "http" {
+			group.GET(actionID, handler, jwtAuthMiddleware(false))
+		} else {
+			group.POST(actionID, handler, jwtAuthMiddleware(false))
+		}
+
 		log.Infof("Registered httpAction for store '%s' with path %s", storeName, groupURI+v.ID)
 	}
 }

@@ -489,12 +489,15 @@ func postFileHandler(storeName string) echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
+
 		req.Header.Set("file-name", fileName)
+		req.Header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, fileName))
 		client := &http.Client{}
 		_, err = client.Do(req)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
+
 		return c.JSON(http.StatusOK, fileID)
 	}
 }

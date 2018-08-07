@@ -176,7 +176,7 @@ func createFileHandlers(storeName string) {
 	group.GET("/:id", getFileHandler(storeName), jwtAuthMiddleware(true))
 	group.POST("/:id", postFileHandler(storeName), jwtAuthMiddleware(false))
 	group.DELETE("/:id", deleteFileHandler(storeName), jwtAuthMiddleware(false))
-	log.Infof("Created handlers for fileStore '%s' with path %s:id", storeName, groupURI)
+	log.Infof("Created handlers for fileStore '%s' with path %s/:id", storeName, groupURI)
 }
 
 func writeFileFromFileStore(c echo.Context, storeName, fileID, fileName string) error {

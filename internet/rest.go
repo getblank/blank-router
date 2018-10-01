@@ -55,7 +55,7 @@ func createRESTAPIForStore(store config.Store) {
 	baseURI := apiV1baseURI + store.Store
 	lowerBaseURI := strings.ToLower(baseURI)
 
-	e.GET(baseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(false))
+	e.GET(baseURI, restGetAllDocumentsHandler(store.Store), allowAnyOriginMiddleware(), jwtAuthMiddleware(true))
 	log.WithFields(log.Fields{"store": store.Store}).Debugf("Created GET all REST method %s", baseURI)
 
 	if baseURI != lowerBaseURI {

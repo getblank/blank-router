@@ -264,6 +264,13 @@ func restGetDocumentHandler(storeName string) echo.HandlerFunc {
 				"_id": id,
 			},
 		}
+		if ver := c.QueryParam("__v"); len(ver) > 0 {
+			v, err := strconv.Atoi(ver)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, "invalid __v param")
+			}
+			t.Arguments["__v"] = v
+		}
 		if cred.claims != nil {
 			t.Arguments["tokenInfo"] = cred.claims.toMap()
 		}

@@ -1,7 +1,7 @@
 package internet
 
 import (
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/getblank/blank-router/berrors"
 	"github.com/getblank/blank-router/taskq"

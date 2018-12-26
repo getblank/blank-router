@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/getblank/wango"
 	"golang.org/x/net/websocket"
 

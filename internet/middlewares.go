@@ -10,7 +10,7 @@ import (
 	"github.com/getblank/blank-router/config"
 	"github.com/getblank/blank-router/settings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/labstack/echo"
 )
 

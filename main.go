@@ -5,8 +5,7 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/gemnasium/logrus-graylog-hook"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/getblank/blank-router/internet"
@@ -29,19 +28,6 @@ func main() {
 		settings.DevMode = true
 	}
 	log.SetFormatter(&log.JSONFormatter{})
-	if os.Getenv("GRAYLOG2_HOST") != "" {
-		host := os.Getenv("GRAYLOG2_HOST")
-		port := os.Getenv("GRAYLOG2_PORT")
-		if port == "" {
-			port = "12201"
-		}
-		source := os.Getenv("GRAYLOG2_SOURCE")
-		if source == "" {
-			source = "blank-router"
-		}
-		hook := graylog.NewGraylogHook(host+":"+port, map[string]interface{}{"source-app": source})
-		log.AddHook(hook)
-	}
 
 	var srAddress *string
 	var verFlag *bool

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/buger/jsonparser"
 	"github.com/dgrijalva/jwt-go"
 
